@@ -8,7 +8,10 @@ apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" upgrade
 
 # install new packages for R
-apt-get -y install build-essential gfortran ed htop libxml2-dev ca-certificates curl libcurl4-openssl-dev gdebi-core sshpass git
+apt-get -y install build-essential gfortran ed htop libxml2-dev ca-certificates curl libcurl4-openssl-dev gdebi-core sshpass git cpufrequtils
+
+# disable CPU throttling for ATLAS multi-threading
+echo performance | tee /sys/devices/system/cpu/cpu**/cpufreq/scaling_governor
 
 # hack with Microsoft R Open deps
 wget ${WGET_OPTIONS} http://ftp.pl.debian.org/debian/pool/main/libj/libjpeg8/libjpeg8_8d1-2_amd64.deb
@@ -98,8 +101,6 @@ apt-get -y purge libopenblas-base
 # - BLAS + LAPACK                                            #
 # - multi-threaded                                           #
 ##############################################################
-
-# disable CPU throttling!
 
 mkdir /opt/blap-lib/atlas-mt/
 
@@ -203,6 +204,12 @@ git clone https://github.com/clMathLibraries/clBLAS.git
 # - BLAS                                                     #
 # - CUDA                                                     #
 ##############################################################
+
+# Ubuntu dependencies
+wget ${WGET_OPTIONS} http://de.archive.ubuntu.com/ubuntu/pool/main/x/x-kit/python3-xkit_0.5.0ubuntu2_all.deb
+wget ${WGET_OPTIONS} http://de.archive.ubuntu.com/ubuntu/pool/main/s/screen-resolution-extra/screen-resolution-extra_0.17.1_all.deb
+gdebi -n python3-xkit_0.5.0ubuntu2_all.deb
+gdebi -n screen-resolution-extra_0.17.1_all.deb
 
 wget ${WGET_OPTIONS} http://developer.download.nvidia.com/compute/cuda/7.5/Prod/local_installers/cuda-repo-ubuntu1504-7-5-local_7.5-18_amd64.deb
 gdebi -n cuda-repo-ubuntu1504-7-5-local_7.5-18_amd64.deb
