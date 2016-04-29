@@ -1,14 +1,9 @@
 #!/bin/bash
 
-# TODO: move from /root to /opt
-
 WGET_OPTIONS="--no-check-certificate"
 MRO_VERSION="3.2.4"
 
 # update debian repos & upgrade packages
-sed -i -e 's/ftp.debian.org/ftp.pl.debian.org/ig' /etc/apt/sources.list
-sed -i -e 's/wheezy/jessie/ig' /etc/apt/sources.list
-
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" upgrade
 
@@ -26,69 +21,87 @@ gdebi -n MRO-${MRO_VERSION}-Ubuntu-15.4.x86_64.deb
 rm MRO-${MRO_VERSION}-Ubuntu-15.4.x86_64.deb
 
 # make symbolic link to R libraries dir
-
 ln -s /usr/lib64/MRO-${MRO_VERSION}/R-${MRO_VERSION}/lib/R/lib/ /opt/MRO-lib
 
-############################################################
-#                        BLAS CPU                          #
-############################################################
+# make directory for BLAS and LAPACK libraries
+mkdir -p /opt/blap-lib/
 
-########################
-# netlib - http://www.netlib.org/blas/ - reference singlethread
-########################
-
-# already in R
-
-########################
-# ATLAS - http://math-atlas.sourceforge.net/ - generic singlethread
-########################
-
-# install:   apt-get -y install libatlas3-base
-#            mv /opt/MRO-lib/libRblas.so   /opt/MRO-lib/libRblas.so.orig
+# Generic BLAS & LAPACK install/uninstall in R:
+#
+# install:   mv /opt/MRO-lib/libRblas.so   /opt/MRO-lib/libRblas.so.orig
 #            mv /opt/MRO-lib/libRlapack.so /opt/MRO-lib/libRlapack.so.orig
-#            ln -s /usr/lib/atlas-base/atlas/libblas.so.3   /opt/MRO-lib/libRblas.so
-#            ln -s /usr/lib/atlas-base/atlas/liblapack.so.3 /opt/MRO-lib/libRlapack.so
-
+#            ln -s /opt/blap-lib/xxx/libblas.so   /opt/MRO-lib/libRblas.so
+#            ln -s /opt/blap-lib/xxx/liblapack.so /opt/MRO-lib/libRlapack.so
+#
 # uninstall: rm /opt/MRO-lib/libRblas.so
 #            rm /opt/MRO-lib/libRlapack.so
 #            mv /opt/MRO-lib/libRblas.so.orig   /opt/MRO-lib/libRblas.so
 #            mv /opt/MRO-lib/libRlapack.so.orig /opt/MRO-lib/libRlapack.so
-#            apt-get -y purge libatlas3-base
 
-########################
-# OpenBLAS - libopenblas-base - http://www.openblas.net/ - multithread
-########################
+##############################################################
+##############################################################
+##                          CPU                             ##
+##############################################################
+##############################################################
 
-# install:   apt-get -y install libopenblas-base
-#            mv /opt/MRO-lib/libRblas.so   /opt/MRO-lib/libRblas.so.orig
-#            mv /opt/MRO-lib/libRlapack.so /opt/MRO-lib/libRlapack.so.orig
-#            ln -s /usr/lib/openblas-base/libblas.so.3   /opt/MRO-lib/libRblas.so
-#            ln -s /usr/lib/openblas-base/liblapack.so.3 /opt/MRO-lib/libRlapack.so
+##############################################################
+# netlib                                                     #
+# - http://www.netlib.org/                                   #
+# - BLAS + LAPACK                                            #
+# - single-threaded (reference)                              #
+##############################################################
 
-# uninstall: rm /opt/MRO-lib/libRblas.so
-#            rm /opt/MRO-lib/libRlapack.so
-#            mv /opt/MRO-lib/libRblas.so.orig   /opt/MRO-lib/libRblas.so
-#            mv /opt/MRO-lib/libRlapack.so.orig /opt/MRO-lib/libRlapack.so
-#            apt-get -y purge libopenblas-base
+mkdir /opt/blap-lib/netlib/
 
-########################
-# ATLAS multithread - http://math-atlas.sourceforge.net/ - multithread
-########################
+apt-get -y install libblas3 liblapack3
+
+cp /usr/lib/libblas/libblas.so.3.0  /opt/blap-lib/netlib/
+cp /usr/lib/lapack/liblapack.so.3.0 /opt/blap-lib/netlib/
+
+apt-get -y purge libblas3 liblapack3
+
+##############################################################
+# ATLAS (st)                                                 #
+# - http://math-atlas.sourceforge.net/                       #
+# - BLAS + LAPACK                                            #
+# - single-threaded                                          #
+##############################################################
+
+mkdir /opt/blap-lib/atlas-st/
+
+apt-get -y install libatlas3-base
+
+cp /usr/lib/atlas-base/atlas/libblas.so.3   /opt/blap-lib/atlas-st/
+cp /usr/lib/atlas-base/atlas/liblapack.so.3 /opt/blap-lib/atlas-st/
+
+apt-get -y purge libatlas3-base
+
+##############################################################
+# OpenBLAS                                                   #
+# - http://www.openblas.net/                                 #
+# - BLAS + LAPACK                                            #
+# - multi-threaded                                           #
+##############################################################
+
+mkdir /opt/blap-lib/openblas/
+
+apt-get -y install libopenblas-base
+
+cp /usr/lib/openblas-base/libblas.so.3   /opt/blap-lib/openblas/
+cp /usr/lib/openblas-base/liblapack.so.3 /opt/blap-lib/openblas/
+
+apt-get -y purge libopenblas-base
+
+##############################################################
+# ATLAS (mt)                                                 #
+# - http://math-atlas.sourceforge.net/                       #
+# - BLAS + LAPACK                                            #
+# - multi-threaded                                           #
+##############################################################
 
 # disable CPU throttling!
 
-# netlib lapack
-#
-#wget ${WGET_OPTIONS} http://www.netlib.org/lapack/lapack-3.6.0.tgz
-#tar -xvf lapack-3.6.0.tgz
-#rm lapack-3.6.0.tgz
-#
-#cd lapack-3.6.0
-#cp make.inc.example make.inc
-#make lapacklib -j `nproc`
-#cd ..
-
-# atlas
+mkdir /opt/blap-lib/atlas-mt/
 
 curl -L https://sourceforge.net/projects/math-atlas/files/Developer%20%28unstable%29/3.11.38/atlas3.11.38.tar.bz2/download > atlas3.11.38.tar.bz2
 tar -xvf atlas3.11.38.tar.bz2
@@ -100,14 +113,22 @@ cd build
 
 wget ${WGET_OPTIONS} http://www.netlib.org/lapack/lapack-3.6.0.tgz
 
-../configure --shared --with-netlib-lapack-tarfile=/root/blas-benchmark/ATLAS/build/lapack-3.6.0.tgz
+../configure --shared --with-netlib-lapack-tarfile=`pwd`/lapack-3.6.0.tgz
 make
 
-rm lapack-3.6.0.tgz
+cp lib/libtatlas.so /opt/blap-lib/atlas-mt/
 
-########################
-# GotoBLAS2 - https://prs.ism.ac.jp/~nakama/SurviveGotoBLAS2/ - multithread
-########################
+cd ../../
+rm -r ATLAS
+
+##############################################################
+# GotoBLAS2                                                  #
+# - https://prs.ism.ac.jp/~nakama/SurviveGotoBLAS2/          #
+# - BLAS + LAPACK                                            #
+# - multi-threaded                                           #
+##############################################################
+
+mkdir /opt/blap-lib/gotoblas2/
 
 wget ${WGET_OPTIONS} https://prs.ism.ac.jp/~nakama/SurviveGotoBLAS2/SurviveGotoBLAS2_3.141.tar.gz
 tar -xvf SurviveGotoBLAS2_3.141.tar.gz
@@ -117,35 +138,38 @@ cd survivegotoblas2-3.141
 make -j `nproc`
 cd ..
 
-# install:   mv /opt/MRO-lib/libRblas.so   /opt/MRO-lib/libRblas.so.orig
-#            mv /opt/MRO-lib/libRlapack.so /opt/MRO-lib/libRlapack.so.orig
-#            ln -s /root/blas-benchmark/survivegotoblas2-3.141/exports/libgoto2_nehalemp-r3.141_blas.so   /opt/MRO-lib/libRblas.so
-#            ln -s /root/blas-benchmark/survivegotoblas2-3.141/exports/libgoto2_nehalemp-r3.141_lapack.so /opt/MRO-lib/libRlapack.so
-#            ln -s /root/blas-benchmark/survivegotoblas2-3.141/exports/libgoto2_nehalemp-r3.141_blas.so   /opt/MRO-lib/libgoto2_nehalemp-r3.141_blas.so
-#            ln -s /root/blas-benchmark/survivegotoblas2-3.141/exports/libgoto2_nehalemp-r3.141_lapack.so /opt/MRO-lib/libgoto2_nehalemp-r3.141_lapack.so
+cp survivegotoblas2-3.141/exports/libgoto2_nehalemp-r3.141_blas.so   /opt/blap-lib/gotoblas2/
+cp survivegotoblas2-3.141/exports/libgoto2_nehalemp-r3.141_lapack.so /opt/blap-lib/gotoblas2/
 
-# uninstall: rm /opt/MRO-lib/libRblas.so
-#            rm /opt/MRO-lib/libRlapack.so
-#            rm /opt/MRO-lib/libgoto2_nehalemp-r3.141_blas.so
-#            rm /opt/MRO-lib/libgoto2_nehalemp-r3.141_lapack.so
-#            mv /opt/MRO-lib/libRblas.so.orig   /opt/MRO-lib/libRblas.so
-#            mv /opt/MRO-lib/libRlapack.so.orig /opt/MRO-lib/libRlapack.so
+rm -r survivegotoblas2-3.141
 
-########################
-# MKL - https://mran.microsoft.com/documents/rro/multithread/ - multithread
-########################
+##############################################################
+# MKL                                                        #
+# - https://mran.microsoft.com/documents/rro/multithread/    #
+# - BLAS + LAPACK                                            #
+# - multi-threaded                                           #
+##############################################################
 
-# install:   cd ~/RevoMath ; echo 1 | ./RevoMath.sh
-# uninstall: cd ~/RevoMath ; echo 2 | ./RevoMath.sh
+mkdir /opt/blap-lib/mkl/
 
 wget ${WGET_OPTIONS} https://mran.microsoft.com/install/mro/${MRO_VERSION}/RevoMath-${MRO_VERSION}.tar.gz
 tar -xvzf RevoMath-${MRO_VERSION}.tar.gz
 rm RevoMath-${MRO_VERSION}.tar.gz
 sed -i '16,18d' RevoMath/RevoMath.sh
 
-########################
-# BLIS - https://github.com/flame/blis - multithread
-########################
+mv RevoMath /opt/blap-lib/mkl/
+
+# install:   cd /opt/blap-lib/mkl/RevoMath ; echo 1 | ./RevoMath.sh
+# uninstall: cd /opt/blap-lib/mkl/RevoMath ; echo 2 | ./RevoMath.sh
+
+##############################################################
+# BLIS                                                       #
+# - https://github.com/flame/blis                            #
+# - BLAS                                                     #
+# - multi-threaded                                           #
+##############################################################
+
+mkdir /opt/blap-lib/blis/
 
 git clone https://github.com/flame/blis.git
 cd blis
@@ -154,39 +178,46 @@ cd blis
 make -j `nproc`
 cd ..
 
-# install:   mv /opt/MRO-lib/libRblas.so   /opt/MRO-lib/libRblas.so.orig
-#            ln -s `find /root/blas-benchmark/blis/ -name "libblis.so"`   /opt/MRO-lib/libRblas.so
+cp `find ./blis/ -name "libblis.so"` /opt/blap-lib/blis/
 
-# uninstall: rm /opt/MRO-lib/libRblas.so
-#            mv /opt/MRO-lib/libRblas.so.orig   /opt/MRO-lib/libRblas.so
+rm -r blis
 
+##############################################################
+##############################################################
+##                          GPU                             ##
+##############################################################
+##############################################################
 
-############################################################
-#                        BLAS GPU                          #
-############################################################
-
-########################
-# clBLAS - https://github.com/clMathLibraries/clBLAS - OpenCL
-########################
+##############################################################
+# clBLAS                                                     #
+# - https://github.com/clMathLibraries/clBLAS                #
+# - BLAS                                                     #
+# - OpenCL                                                   #
+##############################################################
 
 git clone https://github.com/clMathLibraries/clBLAS.git
 
-########################
-# cuBLAS/NVBLAS - https://developer.nvidia.com/cublas - CUDA
-########################
+##############################################################
+# cuBLAS (NVBLAS)                                            #
+# - https://developer.nvidia.com/cublas                      #
+# - BLAS                                                     #
+# - CUDA                                                     #
+##############################################################
 
 wget ${WGET_OPTIONS} http://developer.download.nvidia.com/compute/cuda/7.5/Prod/local_installers/cuda-repo-ubuntu1504-7-5-local_7.5-18_amd64.deb
 gdebi -n cuda-repo-ubuntu1504-7-5-local_7.5-18_amd64.deb
 rm cuda-repo-ubuntu1504-7-5-local_7.5-18_amd64.deb
 
-############################################################
-#                        LAPACK GPU                        #
-############################################################
+##############################################################
+# MAGMA                                                      #
+# - http://icl.cs.utk.edu/magma/software/                    #
+# - LAPACK                                                   #
+# - OpenCL, CUDA                                             #
+##############################################################
 
-########################
-# MAGMA  - http://icl.cs.utk.edu/magma/software/ - multithread GPU OpenCL/CUDA
-########################
-
-########################
-# CULA - http://www.culatools.com/ - multithread GPU CUDA
-########################
+##############################################################
+# CULA                                                       #
+# - http://www.culatools.com/                                #
+# - LAPACK                                                   #
+# - CUDA                                                     #
+##############################################################
