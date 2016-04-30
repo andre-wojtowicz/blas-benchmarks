@@ -1,4 +1,6 @@
 library(checkpoint)
+checkpoint("2016-04-01")
+
 library(rbenchmark)
 
 f = function()

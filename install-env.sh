@@ -26,6 +26,9 @@ rm MRO-${MRO_VERSION}-Ubuntu-15.4.x86_64.deb
 # make symbolic link to R libraries dir
 ln -s /usr/lib64/MRO-${MRO_VERSION}/R-${MRO_VERSION}/lib/R/lib/ /opt/MRO-lib
 
+# make directory for R checkpoint
+mkdir ~/.checkpoint
+
 # make directory for BLAS and LAPACK libraries
 mkdir -p /opt/blap-lib/
 
@@ -172,16 +175,18 @@ mv RevoMath /opt/blap-lib/mkl/
 
 mkdir /opt/blap-lib/blis/
 
-git clone https://github.com/flame/blis.git
-cd blis
+wget ${WGET_OPTIONS} https://github.com/flame/blis/archive/0.2.0.tar.gz -O blis-0.2.0.tar.gz
+tar -xvzf blis-0.2.0.tar.gz
+rm blis-0.2.0.tar.gz
 
+cd blis-0.2.0
 ./configure --enable-shared auto
 make -j `nproc`
 cd ..
 
-cp `find ./blis/ -name "libblis.so"` /opt/blap-lib/blis/
+cp `find ./blis-0.2.0/ -name "libblis.so"` /opt/blap-lib/blis/
 
-rm -r blis
+rm -r blis-0.2.0
 
 ##############################################################
 ##############################################################
@@ -196,7 +201,13 @@ rm -r blis
 # - OpenCL                                                   #
 ##############################################################
 
-git clone https://github.com/clMathLibraries/clBLAS.git
+wget ${WGET_OPTIONS} https://github.com/clMathLibraries/clBLAS/archive/v2.10.tar.gz -O clBLAS-2.10.tar.gz
+tar -xvzf clBLAS-2.10.tar.gz
+rm clBLAS-2.10.tar.gz
+
+#cd clBLAS-2.10
+#
+#cd ..
 
 ##############################################################
 # cuBLAS (NVBLAS)                                            #
@@ -205,15 +216,31 @@ git clone https://github.com/clMathLibraries/clBLAS.git
 # - CUDA                                                     #
 ##############################################################
 
+# TODO: cuSOLVE (dense, LAPACK)?
+
+mkdir /opt/blap-lib/cublas/
+
 # Ubuntu dependencies
 wget ${WGET_OPTIONS} http://de.archive.ubuntu.com/ubuntu/pool/main/x/x-kit/python3-xkit_0.5.0ubuntu2_all.deb
 wget ${WGET_OPTIONS} http://de.archive.ubuntu.com/ubuntu/pool/main/s/screen-resolution-extra/screen-resolution-extra_0.17.1_all.deb
 gdebi -n python3-xkit_0.5.0ubuntu2_all.deb
 gdebi -n screen-resolution-extra_0.17.1_all.deb
 
-wget ${WGET_OPTIONS} http://developer.download.nvidia.com/compute/cuda/7.5/Prod/local_installers/cuda-repo-ubuntu1504-7-5-local_7.5-18_amd64.deb
-gdebi -n cuda-repo-ubuntu1504-7-5-local_7.5-18_amd64.deb
-rm cuda-repo-ubuntu1504-7-5-local_7.5-18_amd64.deb
+wget ${WGET_OPTIONS} http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1504/x86_64/cuda-repo-ubuntu1504_7.5-18_amd64.deb
+gdebi -n cuda-repo-ubuntu1504_7.5-18_amd64.deb
+rm cuda-repo-ubuntu1504_7.5-18_amd64.deb
+
+apt-get update
+apt-get install cuda
+
+echo "NVBLAS_LOGFILE       nvblas.log
+NVBLAS_CPU_BLAS_LIB  /opt/blap-lib/netlib/libblas.so.3.0
+NVBLAS_GPU_LIST      ALL0
+NVBLAS_TILE_DIM      2048
+NVBLAS_AUTOPIN_MEM_ENABLED" > /opt/blap-lib/cublas/nvblas.conf
+
+# run R:
+# NVBLAS_CONFIG_FILE=/opt/blap-lib/cublas/nvblas.conf LD_PRELOAD="/usr/local/cuda-7.5/targets/x86_64-linux/lib/libnvblas.so.7.5 /usr/local/cuda-7.5/targets/x86_64-linux/lib/libcublas.so.7.5" R
 
 ##############################################################
 # MAGMA                                                      #
