@@ -2,47 +2,50 @@
 
 WGET_OPTIONS="--no-check-certificate"
 MRO_VERSION="3.2.4"
+CHECKPOINT_DATE="2016-04-01"
+R_SAMPLE_BENCHMARK="Rscript sample-benchmark.R"
+DIR_BLAP="/opt/blap-lib"
 
-# update debian repos & upgrade packages
-apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" upgrade
+function mro_install {
 
-# install new packages for R
-apt-get -y install build-essential gfortran ed htop libxml2-dev ca-certificates curl libcurl4-openssl-dev gdebi-core sshpass git cpufrequtils
+    echo "Started installing Microsoft R Open and dependencies."
 
-# disable CPU throttling for ATLAS multi-threading
-echo performance | tee /sys/devices/system/cpu/cpu**/cpufreq/scaling_governor
+    # update debian repos & upgrade packages
+    apt-get update
+    DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" upgrade
 
-# hack with Microsoft R Open deps
-wget ${WGET_OPTIONS} http://ftp.pl.debian.org/debian/pool/main/libj/libjpeg8/libjpeg8_8d1-2_amd64.deb
-gdebi -n libjpeg8_8d1-2_amd64.deb
-rm libjpeg8_8d1-2_amd64.deb
+    # install new packages for R
+    apt-get -y install build-essential gfortran ed htop libxml2-dev ca-certificates curl libcurl4-openssl-dev gdebi-core sshpass git cpufrequtils
 
-# install Microsoft R Open
-wget ${WGET_OPTIONS} https://mran.microsoft.com/install/mro/${MRO_VERSION}/MRO-${MRO_VERSION}-Ubuntu-15.4.x86_64.deb
-gdebi -n MRO-${MRO_VERSION}-Ubuntu-15.4.x86_64.deb
-rm MRO-${MRO_VERSION}-Ubuntu-15.4.x86_64.deb
+    # disable CPU throttling for ATLAS multi-threading
+    echo performance | tee /sys/devices/system/cpu/cpu**/cpufreq/scaling_governor
 
-# make symbolic link to R libraries dir
-ln -s /usr/lib64/MRO-${MRO_VERSION}/R-${MRO_VERSION}/lib/R/lib/ /opt/MRO-lib
+    # hack with Microsoft R Open deps
+    wget ${WGET_OPTIONS} http://ftp.pl.debian.org/debian/pool/main/libj/libjpeg8/libjpeg8_8d1-2_amd64.deb
+    gdebi -n libjpeg8_8d1-2_amd64.deb
+    rm libjpeg8_8d1-2_amd64.deb
 
-# make directory for R checkpoint
-mkdir ~/.checkpoint
+    # install Microsoft R Open
+    wget ${WGET_OPTIONS} https://mran.microsoft.com/install/mro/${MRO_VERSION}/MRO-${MRO_VERSION}-Ubuntu-15.4.x86_64.deb
+    gdebi -n MRO-${MRO_VERSION}-Ubuntu-15.4.x86_64.deb
+    rm MRO-${MRO_VERSION}-Ubuntu-15.4.x86_64.deb
 
-# make directory for BLAS and LAPACK libraries
-mkdir -p /opt/blap-lib/
+    # make symbolic link to R libraries dir
+    ln -s /usr/lib64/MRO-${MRO_VERSION}/R-${MRO_VERSION}/lib/R/lib/ /opt/MRO-lib
 
-# Generic BLAS & LAPACK install/uninstall in R:
-#
-# install:   mv /opt/MRO-lib/libRblas.so   /opt/MRO-lib/libRblas.so.orig
-#            mv /opt/MRO-lib/libRlapack.so /opt/MRO-lib/libRlapack.so.orig
-#            ln -s /opt/blap-lib/xxx/libblas.so   /opt/MRO-lib/libRblas.so
-#            ln -s /opt/blap-lib/xxx/liblapack.so /opt/MRO-lib/libRlapack.so
-#
-# uninstall: rm /opt/MRO-lib/libRblas.so
-#            rm /opt/MRO-lib/libRlapack.so
-#            mv /opt/MRO-lib/libRblas.so.orig   /opt/MRO-lib/libRblas.so
-#            mv /opt/MRO-lib/libRlapack.so.orig /opt/MRO-lib/libRlapack.so
+    # prepare R checkpoint
+    mkdir ~/.checkpoint
+    Rscript -e "library(checkpoint); checkpoint('${CHECKPOINT_DATE}')"
+    sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" sample-benchmark.R
+
+    # make directory for BLAS and LAPACK libraries
+    mkdir -p ${DIR_BLAP}
+    
+    # clean archives
+    apt-get clean
+    
+    echo "Finished installing Microsoft R Open and dependencies."
+}
 
 ##############################################################
 ##############################################################
@@ -57,14 +60,36 @@ mkdir -p /opt/blap-lib/
 # - single-threaded (reference)                              #
 ##############################################################
 
-mkdir /opt/blap-lib/netlib/
+DIR_NETLIB="${DIR_BLAP}/netlib"
 
-apt-get -y install libblas3 liblapack3
+function netlib_install {
 
-cp /usr/lib/libblas/libblas.so.3.0  /opt/blap-lib/netlib/
-cp /usr/lib/lapack/liblapack.so.3.0 /opt/blap-lib/netlib/
+    echo "Started installing netlib."
 
-apt-get -y purge libblas3 liblapack3
+    mkdir ${DIR_NETLIB}
+
+    apt-get -y install libblas3 liblapack3
+
+    cp /usr/lib/libblas/libblas.so.3.0  ${DIR_NETLIB}
+    cp /usr/lib/lapack/liblapack.so.3.0 ${DIR_NETLIB}
+
+    apt-get -y purge libblas3 liblapack3
+    apt-get clean
+    
+    echo "Installed files:"
+    find ${DIR_NETLIB} -type f
+
+    echo "Finished installing netlib."
+}
+
+function netlib_check {
+
+    echo "Started checking netlib."
+
+    LD_PRELOAD="${DIR_NETLIB}/libblas.so.3.0 ${DIR_NETLIB}/liblapack.so.3.0" ${R_SAMPLE_BENCHMARK}
+
+    echo "Finished checking netlib."
+}
 
 ##############################################################
 # ATLAS (st)                                                 #
@@ -73,14 +98,37 @@ apt-get -y purge libblas3 liblapack3
 # - single-threaded                                          #
 ##############################################################
 
-mkdir /opt/blap-lib/atlas-st/
+DIR_ATLAS_ST="${DIR_BLAP}/atlas-st"
 
-apt-get -y install libatlas3-base
+function atlas_st_install {
 
-cp /usr/lib/atlas-base/atlas/libblas.so.3   /opt/blap-lib/atlas-st/
-cp /usr/lib/atlas-base/atlas/liblapack.so.3 /opt/blap-lib/atlas-st/
+    echo "Started installing ATLAS (single-threaded)."
 
-apt-get -y purge libatlas3-base
+    mkdir ${DIR_ATLAS_ST}
+
+    apt-get -y install libatlas3-base
+
+    cp /usr/lib/atlas-base/libatlas.so.3        ${DIR_ATLAS_ST}
+    cp /usr/lib/atlas-base/atlas/libblas.so.3   ${DIR_ATLAS_ST}
+    cp /usr/lib/atlas-base/atlas/liblapack.so.3 ${DIR_ATLAS_ST}
+
+    apt-get -y purge libatlas3-base
+    apt-get clean
+    
+    echo "Installed files:"
+    find ${DIR_ATLAS_ST} -type f
+
+    echo "Finished installing ATLAS (single-threaded)."
+}
+
+function atlas_st_check {
+
+    echo "Started checking ATLAS (single-threaded)."
+
+    LD_PRELOAD="${DIR_ATLAS_ST}/libatlas.so.3 ${DIR_ATLAS_ST}/libblas.so.3 ${DIR_ATLAS_ST}/liblapack.so.3" ${R_SAMPLE_BENCHMARK}
+
+    echo "Finished checking ATLAS (single-threaded)."
+}
 
 ##############################################################
 # OpenBLAS                                                   #
@@ -89,41 +137,85 @@ apt-get -y purge libatlas3-base
 # - multi-threaded                                           #
 ##############################################################
 
-mkdir /opt/blap-lib/openblas/
+DIR_OPENBLAS="${DIR_BLAP}/openblas"
 
-apt-get -y install libopenblas-base
+function openblas_install {
 
-cp /usr/lib/openblas-base/libblas.so.3   /opt/blap-lib/openblas/
-cp /usr/lib/openblas-base/liblapack.so.3 /opt/blap-lib/openblas/
+    echo "Started installing OpenBLAS."
 
-apt-get -y purge libopenblas-base
+    mkdir ${DIR_OPENBLAS}
+
+    apt-get -y install libopenblas-base
+
+    cp /usr/lib/libopenblas.so.0             ${DIR_OPENBLAS}
+    cp /usr/lib/openblas-base/libblas.so.3   ${DIR_OPENBLAS}
+    cp /usr/lib/openblas-base/liblapack.so.3 ${DIR_OPENBLAS}
+
+    apt-get -y purge libopenblas-base
+    apt-get clean
+    
+    echo "Installed files:"
+    find ${DIR_OPENBLAS} -type f
+
+    echo "Finished installing OpenBLAS."
+}
+
+function openblas_check {
+
+    echo "Started checking OpenBLAS."
+
+    LD_PRELOAD="${DIR_OPENBLAS}/libopenblas.so.0 ${DIR_OPENBLAS}/libblas.so.3 ${DIR_OPENBLAS}/liblapack.so.3" ${R_SAMPLE_BENCHMARK}
+
+    echo "Finished checking OpenBLAS."
+}
 
 ##############################################################
 # ATLAS (mt)                                                 #
 # - http://math-atlas.sourceforge.net/                       #
-# - BLAS + LAPACK                                            #
+# - BLAS + netlib LAPACK                                     #
 # - multi-threaded                                           #
 ##############################################################
 
-mkdir /opt/blap-lib/atlas-mt/
+DIR_ATLAS_MT="${DIR_BLAP}/atlas-mt"
 
-curl -L https://sourceforge.net/projects/math-atlas/files/Developer%20%28unstable%29/3.11.38/atlas3.11.38.tar.bz2/download > atlas3.11.38.tar.bz2
-tar -xvf atlas3.11.38.tar.bz2
-rm atlas3.11.38.tar.bz2
+function atlas_mt_install {
 
-cd ATLAS
-mkdir build
-cd build
+    echo "Started installing ATLAS (multi-threaded)."
 
-wget ${WGET_OPTIONS} http://www.netlib.org/lapack/lapack-3.6.0.tgz
+    mkdir ${DIR_ATLAS_MT}
 
-../configure --shared --with-netlib-lapack-tarfile=`pwd`/lapack-3.6.0.tgz
-make
+    curl -L https://sourceforge.net/projects/math-atlas/files/Developer%20%28unstable%29/3.11.38/atlas3.11.38.tar.bz2/download > atlas3.11.38.tar.bz2
+    tar -xvf atlas3.11.38.tar.bz2
+    rm atlas3.11.38.tar.bz2
 
-cp lib/libtatlas.so /opt/blap-lib/atlas-mt/
+    cd ATLAS
+    mkdir build
+    cd build
 
-cd ../../
-rm -r ATLAS
+    wget ${WGET_OPTIONS} http://www.netlib.org/lapack/lapack-3.6.0.tgz
+
+    ../configure --shared --with-netlib-lapack-tarfile=`pwd`/lapack-3.6.0.tgz
+    make
+
+    cp lib/libtatlas.so ${DIR_ATLAS_MT}
+
+    cd ../../
+    rm -r ATLAS
+    
+    echo "Installed files:"
+    find ${DIR_ATLAS_MT} -type f
+
+    echo "Finished installing ATLAS (multi-threaded)."
+}
+
+function atlas_mt_check {
+
+    echo "Started checking ATLAS (multi-threaded)."
+
+    LD_PRELOAD="${DIR_ATLAS_MT}/libtatlas.so" ${R_SAMPLE_BENCHMARK}
+
+    echo "Finished checking ATLAS (multi-threaded)."
+}
 
 ##############################################################
 # GotoBLAS2                                                  #
@@ -132,20 +224,50 @@ rm -r ATLAS
 # - multi-threaded                                           #
 ##############################################################
 
-mkdir /opt/blap-lib/gotoblas2/
+DIR_GOTOBLAS2="${DIR_BLAP}/gotoblas2"
 
-wget ${WGET_OPTIONS} https://prs.ism.ac.jp/~nakama/SurviveGotoBLAS2/SurviveGotoBLAS2_3.141.tar.gz
-tar -xvf SurviveGotoBLAS2_3.141.tar.gz
-rm SurviveGotoBLAS2_3.141.tar.gz
+function gotoblas2_install {
 
-cd survivegotoblas2-3.141
-make -j `nproc`
-cd ..
+    echo "Started installing GotoBLAS2."
 
-cp survivegotoblas2-3.141/exports/libgoto2_nehalemp-r3.141_blas.so   /opt/blap-lib/gotoblas2/
-cp survivegotoblas2-3.141/exports/libgoto2_nehalemp-r3.141_lapack.so /opt/blap-lib/gotoblas2/
+    mkdir ${DIR_GOTOBLAS2}
 
-rm -r survivegotoblas2-3.141
+    wget ${WGET_OPTIONS} https://prs.ism.ac.jp/~nakama/SurviveGotoBLAS2/SurviveGotoBLAS2_3.141.tar.gz
+    tar -xvf SurviveGotoBLAS2_3.141.tar.gz
+    rm SurviveGotoBLAS2_3.141.tar.gz
+
+    cd survivegotoblas2-3.141
+    make REFBLAS_ANTILOGY=1 NO_CBLAS=1 GOTOBLASLIBSONAME=libgoto2blas.so GOTOLAPACKLIBSONAME=libgoto2lapack.so -j `nproc`
+    
+    cp exports/libgoto2blas.so   ${DIR_GOTOBLAS2}
+    cp exports/libgoto2lapack.so ${DIR_GOTOBLAS2}
+    
+    cd ..
+    rm -r survivegotoblas2-3.141
+    
+    echo "${DIR_GOTOBLAS2}" > /etc/ld.so.conf.d/gotoblas2.conf
+    ldconfig
+    
+    Rscript -e "library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE); install.packages('RhpcBLASctl')"
+    
+    echo "Installed files:"
+    find ${DIR_GOTOBLAS2} -type f
+
+    echo "Finished installing GotoBLAS2."
+}
+
+function gotoblas2_check {
+
+    echo "Started checking GotoBLAS2."
+
+    sed "2i\library(RhpcBLASctl); blas_set_num_threads(`nproc`)" sample-benchmark.R > sample-benchmark-gotoblas2.R
+    
+    LD_PRELOAD="${DIR_GOTOBLAS2}/libgoto2blas.so ${DIR_GOTOBLAS2}/libgoto2lapack.so" GOTO_NUM_THREADS=`nproc` Rscript sample-benchmark-gotoblas2.R
+    
+    rm sample-benchmark-gotoblas2.R
+
+    echo "Finished checking GotoBLAS2."
+}
 
 ##############################################################
 # MKL                                                        #
@@ -154,17 +276,36 @@ rm -r survivegotoblas2-3.141
 # - multi-threaded                                           #
 ##############################################################
 
-mkdir /opt/blap-lib/mkl/
+DIR_MKL="${DIR_BLAP}/mkl"
 
-wget ${WGET_OPTIONS} https://mran.microsoft.com/install/mro/${MRO_VERSION}/RevoMath-${MRO_VERSION}.tar.gz
-tar -xvzf RevoMath-${MRO_VERSION}.tar.gz
-rm RevoMath-${MRO_VERSION}.tar.gz
-sed -i '16,18d' RevoMath/RevoMath.sh
+function mkl_install {
 
-mv RevoMath /opt/blap-lib/mkl/
+    echo "Started installing MKL."
 
-# install:   cd /opt/blap-lib/mkl/RevoMath ; echo 1 | ./RevoMath.sh
-# uninstall: cd /opt/blap-lib/mkl/RevoMath ; echo 2 | ./RevoMath.sh
+    mkdir ${DIR_MKL}
+
+    wget ${WGET_OPTIONS} https://mran.microsoft.com/install/mro/${MRO_VERSION}/RevoMath-${MRO_VERSION}.tar.gz
+    tar -xvzf RevoMath-${MRO_VERSION}.tar.gz
+    rm RevoMath-${MRO_VERSION}.tar.gz
+    
+    cp RevoMath/mkl/libs/*.so ${DIR_MKL}
+
+    rm RevoMath -r
+    
+    echo "Installed files:"
+    find ${DIR_MKL} -type f
+
+    echo "Finished installing MKL."
+}
+
+function mkl_check {
+
+    echo "Started checking MKL."
+
+    LD_PRELOAD="${DIR_MKL}/libRblas.so ${DIR_MKL}/libRlapack.so ${DIR_MKL}/libmkl_vml_mc3.so ${DIR_MKL}/libmkl_vml_def.so ${DIR_MKL}/libmkl_gnu_thread.so ${DIR_MKL}/libmkl_core.so ${DIR_MKL}/libmkl_gf_lp64.so ${DIR_MKL}/libiomp5.so ${DIR_MKL}/libmkl_gf_ilp64.so" MKL_INTERFACE_LAYER="GNU,LP64" MKL_THREADING_LAYER="GNU" ${R_SAMPLE_BENCHMARK}
+
+    echo "Finished checking MKL."
+}
 
 ##############################################################
 # BLIS                                                       #
@@ -173,20 +314,41 @@ mv RevoMath /opt/blap-lib/mkl/
 # - multi-threaded                                           #
 ##############################################################
 
-mkdir /opt/blap-lib/blis/
+DIR_BLIS="${DIR_BLAP}/blis"
 
-wget ${WGET_OPTIONS} https://github.com/flame/blis/archive/0.2.0.tar.gz -O blis-0.2.0.tar.gz
-tar -xvzf blis-0.2.0.tar.gz
-rm blis-0.2.0.tar.gz
+function blis_install {
 
-cd blis-0.2.0
-./configure --enable-shared auto
-make -j `nproc`
-cd ..
+    echo "Started installing BLIS."
 
-cp `find ./blis-0.2.0/ -name "libblis.so"` /opt/blap-lib/blis/
+    mkdir ${DIR_BLIS}
 
-rm -r blis-0.2.0
+    git clone https://github.com/flame/blis.git
+    cd blis
+    git checkout 0b01d355ae861754ae2da6c9a545474af010f02e
+    
+    ./configure -t pthreads --enable-shared auto
+    make -j `nproc`
+    cd ..
+
+    cp `find ./blis/ -name "libblis.so"` ${DIR_BLIS}
+
+    rm -r blis
+    
+    echo "Installed files:"
+    find ${DIR_BLIS} -type f
+
+    echo "Finished installing BLIS."
+}
+
+function blis_check {
+
+    echo "Started checking BLIS."
+
+    # TODO: auto set variables according to https://github.com/flame/blis/wiki/Multithreading
+    LD_PRELOAD="${DIR_BLIS}/libblis.so" BLIS_JC_NT=2 BLIS_IC_NT=1 BLIS_JR_NT=1 BLIS_IR_NT=1 ${R_SAMPLE_BENCHMARK}
+
+    echo "Finished checking BLIS."
+}
 
 ##############################################################
 ##############################################################
@@ -201,13 +363,21 @@ rm -r blis-0.2.0
 # - OpenCL                                                   #
 ##############################################################
 
-wget ${WGET_OPTIONS} https://github.com/clMathLibraries/clBLAS/archive/v2.10.tar.gz -O clBLAS-2.10.tar.gz
-tar -xvzf clBLAS-2.10.tar.gz
-rm clBLAS-2.10.tar.gz
+function clblas_install {
 
-#cd clBLAS-2.10
-#
-#cd ..
+    echo "Started installing clBLAS."
+
+    wget ${WGET_OPTIONS} https://github.com/clMathLibraries/clBLAS/archive/v2.10.tar.gz -O clBLAS-2.10.tar.gz
+    tar -xvzf clBLAS-2.10.tar.gz
+    rm clBLAS-2.10.tar.gz
+
+    #cd clBLAS-2.10
+    #
+    #cd ..
+    echo "TODO!"
+
+    echo "Finished installing clBLAS."
+}
 
 ##############################################################
 # cuBLAS (NVBLAS)                                            #
@@ -216,31 +386,40 @@ rm clBLAS-2.10.tar.gz
 # - CUDA                                                     #
 ##############################################################
 
-# TODO: cuSOLVE (dense, LAPACK)?
+function cublas_install {
 
-mkdir /opt/blap-lib/cublas/
+    echo "Started installing cuBLAS."
 
-# Ubuntu dependencies
-wget ${WGET_OPTIONS} http://de.archive.ubuntu.com/ubuntu/pool/main/x/x-kit/python3-xkit_0.5.0ubuntu2_all.deb
-wget ${WGET_OPTIONS} http://de.archive.ubuntu.com/ubuntu/pool/main/s/screen-resolution-extra/screen-resolution-extra_0.17.1_all.deb
-gdebi -n python3-xkit_0.5.0ubuntu2_all.deb
-gdebi -n screen-resolution-extra_0.17.1_all.deb
+    # TODO: cuSOLVE (dense, LAPACK)?
 
-wget ${WGET_OPTIONS} http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1504/x86_64/cuda-repo-ubuntu1504_7.5-18_amd64.deb
-gdebi -n cuda-repo-ubuntu1504_7.5-18_amd64.deb
-rm cuda-repo-ubuntu1504_7.5-18_amd64.deb
+    mkdir /opt/blap-lib/cublas
 
-apt-get update
-apt-get install cuda
+    # Ubuntu dependencies
+    wget ${WGET_OPTIONS} http://de.archive.ubuntu.com/ubuntu/pool/main/x/x-kit/python3-xkit_0.5.0ubuntu2_all.deb
+    wget ${WGET_OPTIONS} http://de.archive.ubuntu.com/ubuntu/pool/main/s/screen-resolution-extra/screen-resolution-extra_0.17.1_all.deb
+    gdebi -n python3-xkit_0.5.0ubuntu2_all.deb
+    gdebi -n screen-resolution-extra_0.17.1_all.deb
 
-echo "NVBLAS_LOGFILE       nvblas.log
-NVBLAS_CPU_BLAS_LIB  /opt/blap-lib/netlib/libblas.so.3.0
-NVBLAS_GPU_LIST      ALL0
-NVBLAS_TILE_DIM      2048
-NVBLAS_AUTOPIN_MEM_ENABLED" > /opt/blap-lib/cublas/nvblas.conf
+    wget ${WGET_OPTIONS} http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1504/x86_64/cuda-repo-ubuntu1504_7.5-18_amd64.deb
+    gdebi -n cuda-repo-ubuntu1504_7.5-18_amd64.deb
+    rm cuda-repo-ubuntu1504_7.5-18_amd64.deb
 
-# run R:
-# NVBLAS_CONFIG_FILE=/opt/blap-lib/cublas/nvblas.conf LD_PRELOAD="/usr/local/cuda-7.5/targets/x86_64-linux/lib/libnvblas.so.7.5 /usr/local/cuda-7.5/targets/x86_64-linux/lib/libcublas.so.7.5" R
+    apt-get update
+    apt-get install cuda
+
+    echo "NVBLAS_LOGFILE       nvblas.log
+    NVBLAS_CPU_BLAS_LIB  /opt/blap-lib/netlib/libblas.so.3.0
+    NVBLAS_GPU_LIST      ALL0
+    NVBLAS_TILE_DIM      2048
+    NVBLAS_AUTOPIN_MEM_ENABLED" > /opt/blap-lib/cublas/nvblas.conf
+    
+    apt-get clean
+
+    # run R:
+    # NVBLAS_CONFIG_FILE=/opt/blap-lib/cublas/nvblas.conf LD_PRELOAD="/usr/local/cuda-7.5/targets/x86_64-linux/lib/libnvblas.so.7.5 /usr/local/cuda-7.5/targets/x86_64-linux/lib/libcublas.so.7.5" R
+
+    echo "Finished installing cuBLAS."
+}
 
 ##############################################################
 # MAGMA                                                      #
@@ -249,9 +428,40 @@ NVBLAS_AUTOPIN_MEM_ENABLED" > /opt/blap-lib/cublas/nvblas.conf
 # - OpenCL, CUDA                                             #
 ##############################################################
 
+function magma_install {
+
+    echo "Started installing MAGMA."
+
+    echo "TODO!"
+
+    echo "Finished installing MAGMA."
+}
+
 ##############################################################
 # CULA                                                       #
 # - http://www.culatools.com/                                #
 # - LAPACK                                                   #
 # - CUDA                                                     #
 ##############################################################
+
+function cula_install {
+
+    echo "Started installing CULA."
+
+    echo "TODO!"
+
+    echo "Finished installing CULA."
+}
+
+
+##############################################################
+##############################################################
+
+if [ $# -eq 0 ]; then
+    echo "No arguments supplied"
+else
+    for i in "$@"
+    do
+        $i
+    done
+fi
