@@ -245,9 +245,6 @@ function gotoblas2_install {
     cd ..
     rm -r survivegotoblas2-3.141
     
-    echo "${DIR_GOTOBLAS2}" > /etc/ld.so.conf.d/gotoblas2.conf
-    ldconfig
-    
     Rscript -e "library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE); install.packages('RhpcBLASctl')"
     
     echo "Installed files:"
@@ -260,10 +257,14 @@ function gotoblas2_check {
 
     echo "Started checking GotoBLAS2."
 
+    echo "${DIR_GOTOBLAS2}" > /etc/ld.so.conf.d/gotoblas2.conf
+    ldconfig
     sed "2i\library(RhpcBLASctl); blas_set_num_threads(`nproc`)" sample-benchmark.R > sample-benchmark-gotoblas2.R
     
     LD_PRELOAD="${DIR_GOTOBLAS2}/libgoto2blas.so ${DIR_GOTOBLAS2}/libgoto2lapack.so" GOTO_NUM_THREADS=`nproc` Rscript sample-benchmark-gotoblas2.R
     
+    rm /etc/ld.so.conf.d/gotoblas2.conf
+    ldconfig
     rm sample-benchmark-gotoblas2.R
 
     echo "Finished checking GotoBLAS2."
