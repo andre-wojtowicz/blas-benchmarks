@@ -374,7 +374,7 @@ function cublas_install {
 
     modprobe -r nouveau
 
-    apt-get install nvidia-drivers nvidia-modprobe libnvblas6.0 -y
+    apt-get install linux-headers-$(uname -r|sed 's,[^-]*-[^-]*-,,') nvidia-driver nvidia-modprobe libnvblas6.5 -y
 
     nvidia-modprobe
 
@@ -393,7 +393,7 @@ function cublas_check {
 
     echo "Started checking cuBLAS"
 
-    NVBLAS_CONFIG_FILE=/opt/blap-lib/cublas/nvblas.conf LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libnvblas.so.6.0 /usr/lib/x86_64-linux-gnu/libcublas.so.6.0" ${R_SAMPLE_BENCHMARK}
+    NVBLAS_CONFIG_FILE=/opt/blap-lib/cublas/nvblas.conf LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libnvblas.so.6.5 /usr/lib/x86_64-linux-gnu/libcublas.so.6.5" ${R_SAMPLE_BENCHMARK}
     
     echo "Finished checking cuBLAS"
 }
