@@ -8,7 +8,7 @@ DIR_BLAP="/opt/blap-lib"
 
 function mro_install {
 
-    echo "Started installing Microsoft R Open and dependencies."
+    echo "Started installing Microsoft R Open and dependencies"
 
     # update debian repos & upgrade packages
     apt-get update
@@ -44,7 +44,7 @@ function mro_install {
     # clean archives
     apt-get clean
     
-    echo "Finished installing Microsoft R Open and dependencies."
+    echo "Finished installing Microsoft R Open and dependencies"
 }
 
 ##############################################################
@@ -64,7 +64,7 @@ DIR_NETLIB="${DIR_BLAP}/netlib"
 
 function netlib_install {
 
-    echo "Started installing netlib."
+    echo "Started installing netlib"
 
     mkdir ${DIR_NETLIB}
 
@@ -88,7 +88,7 @@ function netlib_check {
 
     LD_PRELOAD="${DIR_NETLIB}/libblas.so.3.0 ${DIR_NETLIB}/liblapack.so.3.0" ${R_SAMPLE_BENCHMARK}
 
-    echo "Finished checking netlib."
+    echo "Finished checking netlib"
 }
 
 ##############################################################
@@ -102,7 +102,7 @@ DIR_ATLAS_ST="${DIR_BLAP}/atlas-st"
 
 function atlas_st_install {
 
-    echo "Started installing ATLAS (single-threaded)."
+    echo "Started installing ATLAS (single-threaded)"
 
     mkdir ${DIR_ATLAS_ST}
 
@@ -118,16 +118,16 @@ function atlas_st_install {
     echo "Installed files:"
     find ${DIR_ATLAS_ST} -type f
 
-    echo "Finished installing ATLAS (single-threaded)."
+    echo "Finished installing ATLAS (single-threaded)"
 }
 
 function atlas_st_check {
 
-    echo "Started checking ATLAS (single-threaded)."
+    echo "Started checking ATLAS (single-threaded)"
 
     LD_PRELOAD="${DIR_ATLAS_ST}/libatlas.so.3 ${DIR_ATLAS_ST}/libblas.so.3 ${DIR_ATLAS_ST}/liblapack.so.3" ${R_SAMPLE_BENCHMARK}
 
-    echo "Finished checking ATLAS (single-threaded)."
+    echo "Finished checking ATLAS (single-threaded)"
 }
 
 ##############################################################
@@ -141,7 +141,7 @@ DIR_OPENBLAS="${DIR_BLAP}/openblas"
 
 function openblas_install {
 
-    echo "Started installing OpenBLAS."
+    echo "Started installing OpenBLAS"
 
     mkdir ${DIR_OPENBLAS}
 
@@ -157,16 +157,16 @@ function openblas_install {
     echo "Installed files:"
     find ${DIR_OPENBLAS} -type f
 
-    echo "Finished installing OpenBLAS."
+    echo "Finished installing OpenBLAS"
 }
 
 function openblas_check {
 
-    echo "Started checking OpenBLAS."
+    echo "Started checking OpenBLAS"
 
     LD_PRELOAD="${DIR_OPENBLAS}/libopenblas.so.0 ${DIR_OPENBLAS}/libblas.so.3 ${DIR_OPENBLAS}/liblapack.so.3" ${R_SAMPLE_BENCHMARK}
 
-    echo "Finished checking OpenBLAS."
+    echo "Finished checking OpenBLAS"
 }
 
 ##############################################################
@@ -180,7 +180,7 @@ DIR_ATLAS_MT="${DIR_BLAP}/atlas-mt"
 
 function atlas_mt_install {
 
-    echo "Started installing ATLAS (multi-threaded)."
+    echo "Started installing ATLAS (multi-threaded)"
 
     mkdir ${DIR_ATLAS_MT}
 
@@ -205,16 +205,16 @@ function atlas_mt_install {
     echo "Installed files:"
     find ${DIR_ATLAS_MT} -type f
 
-    echo "Finished installing ATLAS (multi-threaded)."
+    echo "Finished installing ATLAS (multi-threaded)"
 }
 
 function atlas_mt_check {
 
-    echo "Started checking ATLAS (multi-threaded)."
+    echo "Started checking ATLAS (multi-threaded)"
 
     LD_PRELOAD="${DIR_ATLAS_MT}/libtatlas.so" ${R_SAMPLE_BENCHMARK}
 
-    echo "Finished checking ATLAS (multi-threaded)."
+    echo "Finished checking ATLAS (multi-threaded)"
 }
 
 ##############################################################
@@ -228,7 +228,7 @@ DIR_GOTOBLAS2="${DIR_BLAP}/gotoblas2"
 
 function gotoblas2_install {
 
-    echo "Started installing GotoBLAS2."
+    echo "Started installing GotoBLAS2"
 
     mkdir ${DIR_GOTOBLAS2}
 
@@ -250,12 +250,12 @@ function gotoblas2_install {
     echo "Installed files:"
     find ${DIR_GOTOBLAS2} -type f
 
-    echo "Finished installing GotoBLAS2."
+    echo "Finished installing GotoBLAS2"
 }
 
 function gotoblas2_check {
 
-    echo "Started checking GotoBLAS2."
+    echo "Started checking GotoBLAS2"
 
     echo "${DIR_GOTOBLAS2}" > /etc/ld.so.conf.d/gotoblas2.conf
     ldconfig
@@ -267,7 +267,7 @@ function gotoblas2_check {
     ldconfig
     rm sample-benchmark-gotoblas2.R
 
-    echo "Finished checking GotoBLAS2."
+    echo "Finished checking GotoBLAS2"
 }
 
 ##############################################################
@@ -281,7 +281,7 @@ DIR_MKL="${DIR_BLAP}/mkl"
 
 function mkl_install {
 
-    echo "Started installing MKL."
+    echo "Started installing MKL"
 
     mkdir ${DIR_MKL}
 
@@ -296,16 +296,16 @@ function mkl_install {
     echo "Installed files:"
     find ${DIR_MKL} -type f
 
-    echo "Finished installing MKL."
+    echo "Finished installing MKL"
 }
 
 function mkl_check {
 
-    echo "Started checking MKL."
+    echo "Started checking MKL"
 
     LD_PRELOAD="${DIR_MKL}/libRblas.so ${DIR_MKL}/libRlapack.so ${DIR_MKL}/libmkl_vml_mc3.so ${DIR_MKL}/libmkl_vml_def.so ${DIR_MKL}/libmkl_gnu_thread.so ${DIR_MKL}/libmkl_core.so ${DIR_MKL}/libmkl_gf_lp64.so ${DIR_MKL}/libiomp5.so ${DIR_MKL}/libmkl_gf_ilp64.so" MKL_INTERFACE_LAYER="GNU,LP64" MKL_THREADING_LAYER="GNU" ${R_SAMPLE_BENCHMARK}
 
-    echo "Finished checking MKL."
+    echo "Finished checking MKL"
 }
 
 ##############################################################
@@ -319,7 +319,7 @@ DIR_BLIS="${DIR_BLAP}/blis"
 
 function blis_install {
 
-    echo "Started installing BLIS."
+    echo "Started installing BLIS"
 
     mkdir ${DIR_BLIS}
 
@@ -338,17 +338,17 @@ function blis_install {
     echo "Installed files:"
     find ${DIR_BLIS} -type f
 
-    echo "Finished installing BLIS."
+    echo "Finished installing BLIS"
 }
 
 function blis_check {
 
-    echo "Started checking BLIS."
+    echo "Started checking BLIS"
 
     # TODO: auto set variables according to https://github.com/flame/blis/wiki/Multithreading
     LD_PRELOAD="${DIR_BLIS}/libblis.so" BLIS_JC_NT=2 BLIS_IC_NT=1 BLIS_JR_NT=1 BLIS_IR_NT=1 ${R_SAMPLE_BENCHMARK}
 
-    echo "Finished checking BLIS."
+    echo "Finished checking BLIS"
 }
 
 ##############################################################
@@ -356,29 +356,6 @@ function blis_check {
 ##                          GPU                             ##
 ##############################################################
 ##############################################################
-
-##############################################################
-# clBLAS                                                     #
-# - https://github.com/clMathLibraries/clBLAS                #
-# - BLAS                                                     #
-# - OpenCL                                                   #
-##############################################################
-
-function clblas_install {
-
-    echo "Started installing clBLAS."
-
-    wget ${WGET_OPTIONS} https://github.com/clMathLibraries/clBLAS/archive/v2.10.tar.gz -O clBLAS-2.10.tar.gz
-    tar -xvzf clBLAS-2.10.tar.gz
-    rm clBLAS-2.10.tar.gz
-
-    #cd clBLAS-2.10
-    #
-    #cd ..
-    echo "TODO!"
-
-    echo "Finished installing clBLAS."
-}
 
 ##############################################################
 # cuBLAS (NVBLAS)                                            #
@@ -389,26 +366,19 @@ function clblas_install {
 
 function cublas_install {
 
-    echo "Started installing cuBLAS."
+    echo "Started installing cuBLAS"
 
     # TODO: cuSOLVE (dense, LAPACK)?
 
     mkdir /opt/blap-lib/cublas
 
-    # Ubuntu dependencies
-    wget ${WGET_OPTIONS} http://de.archive.ubuntu.com/ubuntu/pool/main/x/x-kit/python3-xkit_0.5.0ubuntu2_all.deb
-    wget ${WGET_OPTIONS} http://de.archive.ubuntu.com/ubuntu/pool/main/s/screen-resolution-extra/screen-resolution-extra_0.17.1_all.deb
-    gdebi -n python3-xkit_0.5.0ubuntu2_all.deb
-    gdebi -n screen-resolution-extra_0.17.1_all.deb
+    modprobe -r nouveau
 
-    wget ${WGET_OPTIONS} http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1504/x86_64/cuda-repo-ubuntu1504_7.5-18_amd64.deb
-    gdebi -n cuda-repo-ubuntu1504_7.5-18_amd64.deb
-    rm cuda-repo-ubuntu1504_7.5-18_amd64.deb
+    apt-get install nvidia-drivers nvidia-modprobe libnvblas6.0 -y
 
-    apt-get update
-    apt-get install cuda
+    nvidia-modprobe
 
-    echo "NVBLAS_LOGFILE       nvblas.log
+    echo "#NVBLAS_LOGFILE       nvblas.log
     NVBLAS_CPU_BLAS_LIB  /opt/blap-lib/netlib/libblas.so.3.0
     NVBLAS_GPU_LIST      ALL0
     NVBLAS_TILE_DIM      2048
@@ -416,10 +386,39 @@ function cublas_install {
     
     apt-get clean
 
-    # run R:
-    # NVBLAS_CONFIG_FILE=/opt/blap-lib/cublas/nvblas.conf LD_PRELOAD="/usr/local/cuda-7.5/targets/x86_64-linux/lib/libnvblas.so.7.5 /usr/local/cuda-7.5/targets/x86_64-linux/lib/libcublas.so.7.5" R
+    echo "Finished installing cuBLAS"
+}
 
-    echo "Finished installing cuBLAS."
+function cublas_test {
+
+    echo "Started checking cuBLAS"
+
+    NVBLAS_CONFIG_FILE=/opt/blap-lib/cublas/nvblas.conf LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libnvblas.so.6.0 /usr/lib/x86_64-linux-gnu/libcublas.so.6.0" R -q
+    
+    echo "Finished checking cuBLAS"
+}
+
+##############################################################
+# clBLAS                                                     #
+# - https://github.com/clMathLibraries/clBLAS                #
+# - BLAS                                                     #
+# - OpenCL                                                   #
+##############################################################
+
+function clblas_install {
+
+    echo "Started installing clBLAS"
+
+    wget ${WGET_OPTIONS} https://github.com/clMathLibraries/clBLAS/archive/v2.10.tar.gz -O clBLAS-2.10.tar.gz
+    tar -xvzf clBLAS-2.10.tar.gz
+    rm clBLAS-2.10.tar.gz
+
+    #cd clBLAS-2.10
+    #
+    #cd ..
+    echo "TODO!"
+
+    echo "Finished installing clBLAS"
 }
 
 ##############################################################
@@ -431,11 +430,11 @@ function cublas_install {
 
 function magma_install {
 
-    echo "Started installing MAGMA."
+    echo "Started installing MAGMA"
 
     echo "TODO!"
 
-    echo "Finished installing MAGMA."
+    echo "Finished installing MAGMA"
 }
 
 ##############################################################
@@ -447,11 +446,11 @@ function magma_install {
 
 function cula_install {
 
-    echo "Started installing CULA."
+    echo "Started installing CULA"
 
     echo "TODO!"
 
-    echo "Finished installing CULA."
+    echo "Finished installing CULA"
 }
 
 
