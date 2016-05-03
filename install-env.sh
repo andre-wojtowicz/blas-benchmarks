@@ -15,7 +15,7 @@ function mro_install {
     DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" upgrade
 
     # install new packages for R
-    apt-get -y install build-essential gfortran ed htop libxml2-dev ca-certificates curl libcurl4-openssl-dev gdebi-core sshpass git cpufrequtils
+    apt-get -y install build-essential gfortran ed htop libxml2-dev ca-certificates curl libcurl4-openssl-dev gdebi-core sshpass git cpufrequtils cmake
 
     # disable CPU throttling for ATLAS multi-threading
     echo performance | tee /sys/devices/system/cpu/cpu**/cpufreq/scaling_governor
@@ -389,11 +389,11 @@ function cublas_install {
     echo "Finished installing cuBLAS"
 }
 
-function cublas_test {
+function cublas_check {
 
     echo "Started checking cuBLAS"
 
-    NVBLAS_CONFIG_FILE=/opt/blap-lib/cublas/nvblas.conf LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libnvblas.so.6.0 /usr/lib/x86_64-linux-gnu/libcublas.so.6.0" R -q
+    NVBLAS_CONFIG_FILE=/opt/blap-lib/cublas/nvblas.conf LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libnvblas.so.6.0 /usr/lib/x86_64-linux-gnu/libcublas.so.6.0" ${R_SAMPLE_BENCHMARK}
     
     echo "Finished checking cuBLAS"
 }
@@ -408,6 +408,8 @@ function cublas_test {
 function clblas_install {
 
     echo "Started installing clBLAS"
+    
+    apt-get install libboost-dev liblapack-dev opencl-headers libboost-program-options-dev -y
 
     wget ${WGET_OPTIONS} https://github.com/clMathLibraries/clBLAS/archive/v2.10.tar.gz -O clBLAS-2.10.tar.gz
     tar -xvzf clBLAS-2.10.tar.gz
