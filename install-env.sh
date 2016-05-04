@@ -6,6 +6,10 @@ CHECKPOINT_DATE="2016-04-01"
 R_SAMPLE_BENCHMARK="Rscript sample-benchmark.R"
 DIR_BLAP="/opt/blap-lib"
 
+#TODO: 
+# - leave installed packages
+# - after installation export "LD_PRELOAD"s
+
 function mro_install {
 
     echo "Started installing Microsoft R Open and dependencies"
@@ -374,7 +378,8 @@ function cublas_install {
 
     modprobe -r nouveau
 
-    apt-get install linux-headers-$(uname -r|sed 's,[^-]*-[^-]*-,,') nvidia-driver nvidia-modprobe libnvblas6.5 -y
+    apt-get install linux-headers-$(uname -r|sed 's,[^-]*-[^-]*-,,') nvidia-driver nvidia-modprobe libcuda1 libnvblas6.5 -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" 
+    # TODO: optimus - bbswitch ?
 
     nvidia-modprobe
 
@@ -409,16 +414,21 @@ function clblas_install {
 
     echo "Started installing clBLAS"
     
-    apt-get install libboost-dev liblapack-dev opencl-headers libboost-program-options-dev -y
+    apt-get install libboost-dev liblapack-dev libboost-program-options-dev opencl-headers nvidia-opencl-dev -y
 
     wget ${WGET_OPTIONS} https://github.com/clMathLibraries/clBLAS/archive/v2.10.tar.gz -O clBLAS-2.10.tar.gz
     tar -xvzf clBLAS-2.10.tar.gz
     rm clBLAS-2.10.tar.gz
 
-    #cd clBLAS-2.10
-    #
-    #cd ..
+    cd clBLAS-2.10/src
+    
+    cmake .
+    make -j `nproc`
+    
+    cd ../..
     echo "TODO!"
+    #rm -r clBLAS-2.10/src
+    
 
     echo "Finished installing clBLAS"
 }
@@ -433,8 +443,22 @@ function clblas_install {
 function magma_install {
 
     echo "Started installing MAGMA"
+    
+    apt-get install nvidia-cuda-toolkit -y
+    spt-get clean
 
+    wget http://icl.cs.utk.edu/projectsfiles/magma/downloads/magma-2.0.2.tar.gz
+    tar -xvf magmamagma-2.0.2.tar.gz
+    rm magma-2.0.2.tar.gz
+    
+    cd magma-2.0.2
+    
     echo "TODO!"
+    
+    #make shared
+    
+    cd ..
+    #rm -r magma-2.0.2
 
     echo "Finished installing MAGMA"
 }
