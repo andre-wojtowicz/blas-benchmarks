@@ -77,7 +77,6 @@ function netlib_install {
     cp /usr/lib/libblas/libblas.so.3.0  ${DIR_NETLIB}
     cp /usr/lib/lapack/liblapack.so.3.0 ${DIR_NETLIB}
 
-    apt-get -y purge libblas3 liblapack3
     apt-get clean
     
     echo "Installed files:"
@@ -116,7 +115,6 @@ function atlas_st_install {
     cp /usr/lib/atlas-base/atlas/libblas.so.3   ${DIR_ATLAS_ST}
     cp /usr/lib/atlas-base/atlas/liblapack.so.3 ${DIR_ATLAS_ST}
 
-    apt-get -y purge libatlas3-base
     apt-get clean
     
     echo "Installed files:"
@@ -155,7 +153,6 @@ function openblas_install {
     cp /usr/lib/openblas-base/libblas.so.3   ${DIR_OPENBLAS}
     cp /usr/lib/openblas-base/liblapack.so.3 ${DIR_OPENBLAS}
 
-    apt-get -y purge libopenblas-base
     apt-get clean
     
     echo "Installed files:"
@@ -378,7 +375,7 @@ function cublas_install {
 
     modprobe -r nouveau
 
-    apt-get install linux-headers-$(uname -r|sed 's,[^-]*-[^-]*-,,') nvidia-driver nvidia-modprobe libcuda1 libnvblas6.5 -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" 
+    DEBIAN_FRONTEND=noninteractive apt-get install linux-headers-$(uname -r|sed 's,[^-]*-[^-]*-,,') nvidia-driver nvidia-modprobe libcuda1 libnvblas6.0 -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" 
     # TODO: optimus - bbswitch ?
 
     nvidia-modprobe
@@ -407,7 +404,7 @@ function cublas_check {
 
     echo "Started checking cuBLAS"
 
-    NVBLAS_CONFIG_FILE=/opt/blap-lib/cublas/nvblas.conf LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libnvblas.so.6.5 /usr/lib/x86_64-linux-gnu/libcublas.so.6.5" ${R_SAMPLE_BENCHMARK}
+    NVBLAS_CONFIG_FILE=/opt/blap-lib/cublas/nvblas.conf LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libnvblas.so.6.0 /usr/lib/x86_64-linux-gnu/libcublas.so.6.0" ${R_SAMPLE_BENCHMARK}
     
     echo "Finished checking cuBLAS"
 }
@@ -450,27 +447,42 @@ function clblas_install {
 # - OpenCL, CUDA                                             #
 ##############################################################
 
+DIR_MAGMA="${DIR_BLAP}/magma"
+
 function magma_install {
 
     echo "Started installing MAGMA"
     
-    apt-get install nvidia-cuda-toolkit -y
-    spt-get clean
+    apt-get install nvidia-cuda-toolkit libopenblas-dev -y
+    apt-get clean
 
     wget http://icl.cs.utk.edu/projectsfiles/magma/downloads/magma-2.0.2.tar.gz
-    tar -xvf magmamagma-2.0.2.tar.gz
+    tar -xvf magma-2.0.2.tar.gz
     rm magma-2.0.2.tar.gz
     
     cd magma-2.0.2
+    sed -i '7s/.*/include make.inc.openblas/' Makefile
+    sed -i '18s/.*/GPU_TARGET = Fermi/' make.inc.openblas # TODO: auto choose
+    sed -i '64s/.*/OPENBLASDIR = \/usr/' make.inc.openblas
+    sed -i '65s/.*/CUDADIR = \/usr/' make.inc.openblas
     
-    echo "TODO!"
+    make -j `nproc`
     
-    #make shared
+    cp lib/libmagma.so ${DIR_MAGMA}
     
     cd ..
-    #rm -r magma-2.0.2
+    rm -r magma-2.0.2
 
     echo "Finished installing MAGMA"
+}
+
+function magma_check {
+
+    echo "Started checking MAGMA"
+
+    LD_PRELOAD="${DIR_MAGMA}/libmagma.so" ${R_SAMPLE_BENCHMARK}
+    
+    echo "Finished checking MAGMA"
 }
 
 ##############################################################
