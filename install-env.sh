@@ -394,6 +394,15 @@ function cublas_install {
     echo "Finished installing cuBLAS"
 }
 
+#TODO: switch to 7.5
+function cublas_get_online {
+
+    wget ${WGET_OPTIONS} http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1504/x86_64/cuda-repo-ubuntu1504_7.5-18_amd64.deb
+    dpkg -i cuda-repo-ubuntu1504_7.5-18_amd64.deb
+    apt-get update
+    rm cuda-repo-ubuntu1504_7.5-18_amd64.deb
+}
+
 function cublas_check {
 
     echo "Started checking cuBLAS"
