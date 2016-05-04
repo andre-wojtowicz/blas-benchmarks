@@ -423,6 +423,7 @@ function clblas_install {
 
     echo "Started installing clBLAS"
     
+                                                                            # opencl 1.2
     apt-get install libboost-dev liblapack-dev libboost-program-options-dev opencl-headers nvidia-opencl-dev -y
 
     wget ${WGET_OPTIONS} https://github.com/clMathLibraries/clBLAS/archive/v2.10.tar.gz -O clBLAS-2.10.tar.gz
