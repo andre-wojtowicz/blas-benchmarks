@@ -36,14 +36,10 @@ function mro_install {
     # prepare R checkpoint
     mkdir ~/.checkpoint
     Rscript -e "library(checkpoint); checkpoint('${CHECKPOINT_DATE}')"
-    #sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" sample-benchmark.R
-    #TODO: add new .libPaths()
+    sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" sample-benchmark.R
 
     # make directory for BLAS and LAPACK libraries
     mkdir -p ${DIR_BLAP}
-    
-    # detect logical and physical cores
-    # Rscript -e "parallel::detectCores(1, logical=F)"
     
     # clean archives
     apt-get clean
@@ -127,6 +123,7 @@ function atlas_st_install {
     cp /usr/lib/atlas-base/atlas/liblapack.so.3 ${DIR_ATLAS_ST}
 
     apt-get -y purge libatlas3-base
+    apt-get -y autoremove
     apt-get clean
     
     echo "Installed files:"
@@ -175,6 +172,7 @@ function openblas_install {
     cp /usr/lib/openblas-base/liblapack.so.3 ${DIR_OPENBLAS}
 
     apt-get -y purge libopenblas-base
+    apt-get -y autoremove
     apt-get clean
     
     echo "Installed files:"
@@ -447,7 +445,7 @@ function cublas_install {
     nvidia-modprobe
 
     echo "#NVBLAS_LOGFILE       nvblas.log
-    NVBLAS_CPU_BLAS_LIB  /opt/blap-lib/netlib/libblas.so.3.0
+    NVBLAS_CPU_BLAS_LIB  /opt/blap-lib/mkl/libRblas.so
     NVBLAS_GPU_LIST      ALL0
     NVBLAS_TILE_DIM      2048
     NVBLAS_AUTOPIN_MEM_ENABLED" > /opt/blap-lib/cublas/nvblas.conf
@@ -457,26 +455,26 @@ function cublas_install {
     echo "Finished installing cuBLAS"
 }
 
-function cublas_online_install {
-
-    # Ubuntu dependencies
-    wget ${WGET_OPTIONS} http://de.archive.ubuntu.com/ubuntu/pool/main/x/x-kit/python3-xkit_0.5.0ubuntu2_all.deb
-    wget ${WGET_OPTIONS} http://de.archive.ubuntu.com/ubuntu/pool/main/s/screen-resolution-extra/screen-resolution-extra_0.17.1_all.deb
-    gdebi -n python3-xkit_0.5.0ubuntu2_all.deb
-    gdebi -n screen-resolution-extra_0.17.1_all.deb
-
-    wget ${WGET_OPTIONS} http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1504/x86_64/cuda-repo-ubuntu1504_7.5-18_amd64.deb
-    dpkg -i cuda-repo-ubuntu1504_7.5-18_amd64.deb
-    apt-get update
-    
-    #TODO: install packages
-    
-    rm python3-xkit_0.5.0ubuntu2_all.deb
-    rm screen-resolution-extra_0.17.1_all.deb
-    rm cuda-repo-ubuntu1504_7.5-18_amd64.deb
-    
-    apt-get clean
-}
+#function cublas_online_install {
+#
+#    # Ubuntu dependencies
+#    wget ${WGET_OPTIONS} http://de.archive.ubuntu.com/ubuntu/pool/main/x/x-kit/python3-xkit_0.5.0ubuntu2_all.deb
+#    wget ${WGET_OPTIONS} http://de.archive.ubuntu.com/ubuntu/pool/main/s/screen-resolution-extra/screen-resolution-extra_0.17.1_all.deb
+#    gdebi -n python3-xkit_0.5.0ubuntu2_all.deb
+#    gdebi -n screen-resolution-extra_0.17.1_all.deb
+#
+#    wget ${WGET_OPTIONS} http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1504/x86_64/cuda-repo-ubuntu1504_7.5-18_amd64.deb
+#    dpkg -i cuda-repo-ubuntu1504_7.5-18_amd64.deb
+#    apt-get update
+#    
+#    #TODO: install packages
+#    
+#    rm python3-xkit_0.5.0ubuntu2_all.deb
+#    rm screen-resolution-extra_0.17.1_all.deb
+#    rm cuda-repo-ubuntu1504_7.5-18_amd64.deb
+#    
+#    apt-get clean
+#}
 
 function cublas_check {
 
@@ -494,12 +492,14 @@ function cublas_check {
 # - OpenCL                                                   #
 ##############################################################
 
+DIR_CLBLAS=${DIR_BLAP}/clblas
+
 function clblas_install {
 
     echo "Started installing clBLAS"
     
-    #TODO: opencl 1.2
-    apt-get install libboost-dev liblapack-dev libboost-program-options-dev opencl-headers nvidia-opencl-dev -y
+    apt-get install libboost-dev liblapack-dev libboost-program-options-dev opencl-headers ocl-icd-opencl-dev -y #nvidia-libopencl1 nvidia-opencl-dev
+    apt-get clean
 
     wget ${WGET_OPTIONS} https://github.com/clMathLibraries/clBLAS/archive/v2.10.tar.gz -O clBLAS-2.10.tar.gz
     tar -xvzf clBLAS-2.10.tar.gz
@@ -509,13 +509,23 @@ function clblas_install {
     
     cmake .
     make -j `nproc`
+
+    cp library/libclBLAS.so ${DIR_CLBLAS}
     
     cd ../..
-    echo "TODO!"
-    #rm -r clBLAS-2.10/src
-    
+    rm -r clBLAS-2.10
 
     echo "Finished installing clBLAS"
+}
+
+function clblas_check {
+
+    echo "Started checking clBLAS"
+
+    LD_PRELOAD="${DIR_CLBLAS}/libclBLAS.so /lib/x86_64-linux-gnu/libpthread.so.0" ${R_SAMPLE_BENCHMARK}
+
+    echo "Finished checking clBLAS"
+
 }
 
 ##############################################################
