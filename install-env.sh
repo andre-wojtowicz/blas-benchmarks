@@ -492,41 +492,42 @@ function cublas_check {
 # - OpenCL                                                   #
 ##############################################################
 
-DIR_CLBLAS=${DIR_BLAP}/clblas
-
-function clblas_install {
-
-    echo "Started installing clBLAS"
-    
-    apt-get install libboost-dev liblapack-dev libboost-program-options-dev opencl-headers ocl-icd-opencl-dev -y #nvidia-libopencl1 nvidia-opencl-dev
-    apt-get clean
-
-    wget ${WGET_OPTIONS} https://github.com/clMathLibraries/clBLAS/archive/v2.10.tar.gz -O clBLAS-2.10.tar.gz
-    tar -xvzf clBLAS-2.10.tar.gz
-    rm clBLAS-2.10.tar.gz
-
-    cd clBLAS-2.10/src
-    
-    cmake .
-    make -j `nproc`
-
-    cp library/libclBLAS.so ${DIR_CLBLAS}
-    
-    cd ../..
-    rm -r clBLAS-2.10
-
-    echo "Finished installing clBLAS"
-}
-
-function clblas_check {
-
-    echo "Started checking clBLAS"
-
-    LD_PRELOAD="${DIR_CLBLAS}/libclBLAS.so /lib/x86_64-linux-gnu/libpthread.so.0" ${R_SAMPLE_BENCHMARK}
-
-    echo "Finished checking clBLAS"
-
-}
+#DIR_CLBLAS=${DIR_BLAP}/clblas
+#
+#function clblas_install {
+#
+#    echo "Started installing clBLAS"
+#    
+#    # TODO: req. OpenCL 1.2
+#    apt-get install libboost-dev liblapack-dev libboost-program-options-dev nvidia-opencl-dev 
+#    apt-get clean
+#
+#    wget ${WGET_OPTIONS} https://github.com/clMathLibraries/clBLAS/archive/v2.10.tar.gz -O clBLAS-2.10.tar.gz
+#    tar -xvzf clBLAS-2.10.tar.gz
+#    rm clBLAS-2.10.tar.gz
+#
+#    cd clBLAS-2.10/src
+#    
+#    cmake .
+#    make -j `nproc`
+#
+#    cp library/libclBLAS.so ${DIR_CLBLAS}
+#    
+#    cd ../..
+#    rm -r clBLAS-2.10
+#
+#    echo "Finished installing clBLAS"
+#}
+#
+#function clblas_check {
+#
+#    echo "Started checking clBLAS"
+#
+#    LD_PRELOAD="${DIR_CLBLAS}/libclBLAS.so /lib/x86_64-linux-gnu/libpthread.so.0" ${R_SAMPLE_BENCHMARK}
+#
+#    echo "Finished checking clBLAS"
+#
+#}
 
 ##############################################################
 ##############################################################
