@@ -6,10 +6,6 @@ CHECKPOINT_DATE="2016-04-01"
 R_SAMPLE_BENCHMARK="Rscript sample-benchmark.R"
 DIR_BLAP="/opt/blap-lib"
 
-#TODO: 
-# - leave installed packages
-# - after installation export "LD_PRELOAD"s
-
 function mro_install {
 
     echo "Started installing Microsoft R Open and dependencies"
@@ -40,10 +36,14 @@ function mro_install {
     # prepare R checkpoint
     mkdir ~/.checkpoint
     Rscript -e "library(checkpoint); checkpoint('${CHECKPOINT_DATE}')"
-    sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" sample-benchmark.R
+    #sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" sample-benchmark.R
+    #TODO: add new .libPaths()
 
     # make directory for BLAS and LAPACK libraries
     mkdir -p ${DIR_BLAP}
+    
+    # detect logical and physical cores
+    # Rscript -e "parallel::detectCores(1, logical=F)"
     
     # clean archives
     apt-get clean
@@ -77,12 +77,23 @@ function netlib_install {
     cp /usr/lib/libblas/libblas.so.3.0  ${DIR_NETLIB}
     cp /usr/lib/lapack/liblapack.so.3.0 ${DIR_NETLIB}
 
+    apt-get -y purge libblas3 liblapack3
+    apt-get -y autoremove
     apt-get clean
     
     echo "Installed files:"
     find ${DIR_NETLIB} -type f
 
     echo "Finished installing netlib."
+}
+
+function netlib_remove {
+
+    echo "Started removing netlib"
+
+    rm ${DIR_NETLIB} -r
+
+    echo "Finished removing netlib."
 }
 
 function netlib_check {
@@ -115,6 +126,7 @@ function atlas_st_install {
     cp /usr/lib/atlas-base/atlas/libblas.so.3   ${DIR_ATLAS_ST}
     cp /usr/lib/atlas-base/atlas/liblapack.so.3 ${DIR_ATLAS_ST}
 
+    apt-get -y purge libatlas3-base
     apt-get clean
     
     echo "Installed files:"
@@ -130,6 +142,15 @@ function atlas_st_check {
     LD_PRELOAD="${DIR_ATLAS_ST}/libatlas.so.3 ${DIR_ATLAS_ST}/libblas.so.3 ${DIR_ATLAS_ST}/liblapack.so.3" ${R_SAMPLE_BENCHMARK}
 
     echo "Finished checking ATLAS (single-threaded)"
+}
+
+function atlas_st_remove {
+
+    echo "Started removing ATLAS (single-threaded)"
+
+    rm ${DIR_ATLAS_ST} -r
+
+    echo "Finished removing ATLAS (single-threaded)"
 }
 
 ##############################################################
@@ -153,6 +174,7 @@ function openblas_install {
     cp /usr/lib/openblas-base/libblas.so.3   ${DIR_OPENBLAS}
     cp /usr/lib/openblas-base/liblapack.so.3 ${DIR_OPENBLAS}
 
+    apt-get -y purge libopenblas-base
     apt-get clean
     
     echo "Installed files:"
@@ -168,6 +190,15 @@ function openblas_check {
     LD_PRELOAD="${DIR_OPENBLAS}/libopenblas.so.0 ${DIR_OPENBLAS}/libblas.so.3 ${DIR_OPENBLAS}/liblapack.so.3" ${R_SAMPLE_BENCHMARK}
 
     echo "Finished checking OpenBLAS"
+}
+
+function openblas_remove {
+
+    echo "Started removing OpenBLAS"
+
+    rm ${DIR_OPENBLAS} -r
+
+    echo "Finished removing OpenBLAS"
 }
 
 ##############################################################
@@ -216,6 +247,15 @@ function atlas_mt_check {
     LD_PRELOAD="${DIR_ATLAS_MT}/libtatlas.so" ${R_SAMPLE_BENCHMARK}
 
     echo "Finished checking ATLAS (multi-threaded)"
+}
+
+function atlas_mt_remove {
+
+    echo "Started removing ATLAS (multi-threaded)"
+
+    rm ${DIR_ATLAS_MT} -r
+
+    echo "Finished removing ATLAS (multi-threaded)"
 }
 
 ##############################################################
@@ -271,6 +311,15 @@ function gotoblas2_check {
     echo "Finished checking GotoBLAS2"
 }
 
+function gotoblas2_remove {
+
+    echo "Started removing GotoBLAS2"
+
+    rm ${DIR_GOTOBLAS2} -r
+
+    echo "Finished removing GotoBLAS2"
+}
+
 ##############################################################
 # MKL                                                        #
 # - https://mran.microsoft.com/documents/rro/multithread/    #
@@ -307,6 +356,15 @@ function mkl_check {
     LD_PRELOAD="${DIR_MKL}/libRblas.so ${DIR_MKL}/libRlapack.so ${DIR_MKL}/libmkl_vml_mc3.so ${DIR_MKL}/libmkl_vml_def.so ${DIR_MKL}/libmkl_gnu_thread.so ${DIR_MKL}/libmkl_core.so ${DIR_MKL}/libmkl_gf_lp64.so ${DIR_MKL}/libiomp5.so ${DIR_MKL}/libmkl_gf_ilp64.so" MKL_INTERFACE_LAYER="GNU,LP64" MKL_THREADING_LAYER="GNU" ${R_SAMPLE_BENCHMARK}
 
     echo "Finished checking MKL"
+}
+
+function mkl_remove {
+
+    echo "Started removing MKL"
+
+    rm ${DIR_MKL} -r
+
+    echo "Finished removing MKL"
 }
 
 ##############################################################
@@ -352,6 +410,15 @@ function blis_check {
     echo "Finished checking BLIS"
 }
 
+function blis_remove {
+
+    echo "Started removing BLIS"
+
+    rm ${DIR_BLIS} -r
+
+    echo "Finished removing BLIS"
+}
+
 ##############################################################
 ##############################################################
 ##                          GPU                             ##
@@ -376,7 +443,6 @@ function cublas_install {
     modprobe -r nouveau
 
     DEBIAN_FRONTEND=noninteractive apt-get install linux-headers-$(uname -r|sed 's,[^-]*-[^-]*-,,') nvidia-driver nvidia-modprobe libcuda1 libnvblas6.0 -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" 
-    # TODO: optimus - bbswitch ?
 
     nvidia-modprobe
 
@@ -391,13 +457,25 @@ function cublas_install {
     echo "Finished installing cuBLAS"
 }
 
-#TODO: switch to 7.5
-function cublas_get_online {
+function cublas_online_install {
+
+    # Ubuntu dependencies
+    wget ${WGET_OPTIONS} http://de.archive.ubuntu.com/ubuntu/pool/main/x/x-kit/python3-xkit_0.5.0ubuntu2_all.deb
+    wget ${WGET_OPTIONS} http://de.archive.ubuntu.com/ubuntu/pool/main/s/screen-resolution-extra/screen-resolution-extra_0.17.1_all.deb
+    gdebi -n python3-xkit_0.5.0ubuntu2_all.deb
+    gdebi -n screen-resolution-extra_0.17.1_all.deb
 
     wget ${WGET_OPTIONS} http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1504/x86_64/cuda-repo-ubuntu1504_7.5-18_amd64.deb
     dpkg -i cuda-repo-ubuntu1504_7.5-18_amd64.deb
     apt-get update
+    
+    #TODO: install packages
+    
+    rm python3-xkit_0.5.0ubuntu2_all.deb
+    rm screen-resolution-extra_0.17.1_all.deb
     rm cuda-repo-ubuntu1504_7.5-18_amd64.deb
+    
+    apt-get clean
 }
 
 function cublas_check {
@@ -420,7 +498,7 @@ function clblas_install {
 
     echo "Started installing clBLAS"
     
-                                                                            # opencl 1.2
+    #TODO: opencl 1.2
     apt-get install libboost-dev liblapack-dev libboost-program-options-dev opencl-headers nvidia-opencl-dev -y
 
     wget ${WGET_OPTIONS} https://github.com/clMathLibraries/clBLAS/archive/v2.10.tar.gz -O clBLAS-2.10.tar.gz
@@ -439,68 +517,6 @@ function clblas_install {
 
     echo "Finished installing clBLAS"
 }
-
-##############################################################
-# MAGMA                                                      #
-# - http://icl.cs.utk.edu/magma/software/                    #
-# - LAPACK                                                   #
-# - OpenCL, CUDA                                             #
-##############################################################
-
-DIR_MAGMA="${DIR_BLAP}/magma"
-
-function magma_install {
-
-    echo "Started installing MAGMA"
-    
-    apt-get install nvidia-cuda-toolkit libopenblas-dev -y
-    apt-get clean
-
-    wget http://icl.cs.utk.edu/projectsfiles/magma/downloads/magma-2.0.2.tar.gz
-    tar -xvf magma-2.0.2.tar.gz
-    rm magma-2.0.2.tar.gz
-    
-    cd magma-2.0.2
-    sed -i '7s/.*/include make.inc.openblas/' Makefile
-    sed -i '18s/.*/GPU_TARGET = Fermi/' make.inc.openblas # TODO: auto choose
-    sed -i '64s/.*/OPENBLASDIR = \/usr/' make.inc.openblas
-    sed -i '65s/.*/CUDADIR = \/usr/' make.inc.openblas
-    
-    make -j `nproc`
-    
-    cp lib/libmagma.so ${DIR_MAGMA}
-    
-    cd ..
-    rm -r magma-2.0.2
-
-    echo "Finished installing MAGMA"
-}
-
-function magma_check {
-
-    echo "Started checking MAGMA"
-
-    LD_PRELOAD="${DIR_MAGMA}/libmagma.so" ${R_SAMPLE_BENCHMARK}
-    
-    echo "Finished checking MAGMA"
-}
-
-##############################################################
-# CULA                                                       #
-# - http://www.culatools.com/                                #
-# - LAPACK                                                   #
-# - CUDA                                                     #
-##############################################################
-
-function cula_install {
-
-    echo "Started installing CULA"
-
-    echo "TODO!"
-
-    echo "Finished installing CULA"
-}
-
 
 ##############################################################
 ##############################################################
