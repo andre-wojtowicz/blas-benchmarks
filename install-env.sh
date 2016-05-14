@@ -4,14 +4,15 @@ WGET_OPTIONS="--no-check-certificate"
 MRO_VERSION="3.2.4"
 CHECKPOINT_DATE="2016-04-01"
 R_SAMPLE_BENCHMARK="Rscript sample-benchmark.R"
-DIR_BLAP="/opt/blap-lib"
+DIR_BLAP="/opt/blas-libs"
 
 function mro_install {
 
     echo "Started installing Microsoft R Open and dependencies"
 
     # update debian repos & upgrade packages
-    apt-get update
+    echo "deb http://snapshot.debian.org/archive/debian/20160411T102554Z/ jessie-backports main" >> /etc/apt/sources.list
+    apt-get -o Acquire::Check-Valid-Until=false update
     DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" upgrade
 
     # install new packages for R
@@ -434,13 +435,11 @@ function cublas_install {
 
     echo "Started installing cuBLAS"
 
-    # TODO: cuSOLVE (dense, LAPACK)?
-
     mkdir /opt/blap-lib/cublas
 
     modprobe -r nouveau
 
-    DEBIAN_FRONTEND=noninteractive apt-get install linux-headers-$(uname -r|sed 's,[^-]*-[^-]*-,,') nvidia-driver nvidia-modprobe libcuda1 libnvblas6.0 -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" 
+    DEBIAN_FRONTEND=noninteractive apt-get install linux-headers-$(uname -r) nvidia-driver nvidia-modprobe libcuda1 libnvblas6.0 -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" 
 
     nvidia-modprobe
 
@@ -485,49 +484,6 @@ function cublas_check {
     echo "Finished checking cuBLAS"
 }
 
-##############################################################
-# clBLAS                                                     #
-# - https://github.com/clMathLibraries/clBLAS                #
-# - BLAS                                                     #
-# - OpenCL                                                   #
-##############################################################
-
-#DIR_CLBLAS=${DIR_BLAP}/clblas
-#
-#function clblas_install {
-#
-#    echo "Started installing clBLAS"
-#    
-#    # TODO: req. OpenCL 1.2
-#    apt-get install libboost-dev liblapack-dev libboost-program-options-dev nvidia-opencl-dev 
-#    apt-get clean
-#
-#    wget ${WGET_OPTIONS} https://github.com/clMathLibraries/clBLAS/archive/v2.10.tar.gz -O clBLAS-2.10.tar.gz
-#    tar -xvzf clBLAS-2.10.tar.gz
-#    rm clBLAS-2.10.tar.gz
-#
-#    cd clBLAS-2.10/src
-#    
-#    cmake .
-#    make -j `nproc`
-#
-#    cp library/libclBLAS.so ${DIR_CLBLAS}
-#    
-#    cd ../..
-#    rm -r clBLAS-2.10
-#
-#    echo "Finished installing clBLAS"
-#}
-#
-#function clblas_check {
-#
-#    echo "Started checking clBLAS"
-#
-#    LD_PRELOAD="${DIR_CLBLAS}/libclBLAS.so /lib/x86_64-linux-gnu/libpthread.so.0" ${R_SAMPLE_BENCHMARK}
-#
-#    echo "Finished checking clBLAS"
-#
-#}
 
 ##############################################################
 ##############################################################
