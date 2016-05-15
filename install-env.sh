@@ -15,8 +15,8 @@ function mro_install {
     apt-get -o Acquire::Check-Valid-Until=false update
     DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" upgrade
 
-    # install new packages for R
-    apt-get -y install build-essential gfortran ed htop libxml2-dev ca-certificates curl libcurl4-openssl-dev gdebi-core sshpass git cpufrequtils cmake
+    # install core packages
+    apt-get -y install build-essential gfortran ed htop libxml2-dev ca-certificates curl libcurl4-openssl-dev gdebi-core sshpass git cpufrequtils cmake initramfs-tools linux-headers-$(uname -r)
 
     # disable CPU throttling for ATLAS multi-threading
     echo performance | tee /sys/devices/system/cpu/cpu**/cpufreq/scaling_governor
@@ -441,7 +441,7 @@ function cublas_install {
 
     modprobe -r nouveau
 
-    DEBIAN_FRONTEND=noninteractive apt-get install linux-headers-$(uname -r) nvidia-driver nvidia-modprobe libcuda1 libnvblas6.0 -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" 
+    DEBIAN_FRONTEND=noninteractive apt-get install nvidia-driver nvidia-modprobe libcuda1 libnvblas6.0 -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" 
 
     nvidia-modprobe
 
@@ -451,13 +451,21 @@ function cublas_install {
     NVBLAS_GPU_LIST      ALL0
     NVBLAS_TILE_DIM      2048
     NVBLAS_AUTOPIN_MEM_ENABLED" > ${DIR_CUBLAS}/nvblas.conf
-    
+
     apt-get clean
 
     echo "Finished installing cuBLAS"
 }
 
+# CUDA 7.5 currently supports linux kernel 3.x
+#
 #function cublas_online_install {
+#
+#    echo "Started installing online cuBLAS"
+#
+#    mkdir ${DIR_CUBLAS}
+#
+#    modprobe -r nouveau
 #
 #    # Ubuntu dependencies
 #    wget ${WGET_OPTIONS} http://de.archive.ubuntu.com/ubuntu/pool/main/x/x-kit/python3-xkit_0.5.0ubuntu2_all.deb
@@ -467,15 +475,26 @@ function cublas_install {
 #
 #    wget ${WGET_OPTIONS} http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1504/x86_64/cuda-repo-ubuntu1504_7.5-18_amd64.deb
 #    dpkg -i cuda-repo-ubuntu1504_7.5-18_amd64.deb
-#    apt-get update
-#    
-#    #TODO: install packages
-#    
+#    apt-get -o Acquire::Check-Valid-Until=false update
+#
+#    DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" install cuda-drivers cuda-cublas-7-5 nvidia-modprobe libcuda1-352
+#
+#    nvidia-modprobe
+#
+#    echo "
+#    #NVBLAS_LOGFILE       nvblas.log
+#    NVBLAS_CPU_BLAS_LIB   ${DIR_MKL}/libRblas.so
+#    NVBLAS_GPU_LIST       ALL0
+#    NVBLAS_TILE_DIM       2048
+#    NVBLAS_AUTOPIN_MEM_ENABLED" > ${DIR_CUBLAS}/nvblas.conf
+#
 #    rm python3-xkit_0.5.0ubuntu2_all.deb
 #    rm screen-resolution-extra_0.17.1_all.deb
 #    rm cuda-repo-ubuntu1504_7.5-18_amd64.deb
-#    
+#
 #    apt-get clean
+#
+#    echo "Finished installing online cuBLAS"
 #}
 
 function cublas_check {
