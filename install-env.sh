@@ -4,7 +4,7 @@ WGET_OPTIONS="--no-check-certificate"
 MRO_VERSION="3.2.4"
 CHECKPOINT_DATE="2016-04-01"
 R_SAMPLE_BENCHMARK="Rscript sample-benchmark.R"
-DIR_BLAP="/opt/blas-libs"
+DIR_BLAS="/opt/blas-libs"
 
 function mro_install {
 
@@ -40,7 +40,7 @@ function mro_install {
     sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" sample-benchmark.R
 
     # make directory for BLAS and LAPACK libraries
-    mkdir -p ${DIR_BLAP}
+    mkdir -p ${DIR_BLAS}
     
     # clean archives
     apt-get clean
@@ -61,7 +61,7 @@ function mro_install {
 # - single-threaded (reference)                              #
 ##############################################################
 
-DIR_NETLIB="${DIR_BLAP}/netlib"
+DIR_NETLIB="${DIR_BLAS}/netlib"
 
 function netlib_install {
 
@@ -109,7 +109,7 @@ function netlib_check {
 # - single-threaded                                          #
 ##############################################################
 
-DIR_ATLAS_ST="${DIR_BLAP}/atlas-st"
+DIR_ATLAS_ST="${DIR_BLAS}/atlas-st"
 
 function atlas_st_install {
 
@@ -158,7 +158,7 @@ function atlas_st_remove {
 # - multi-threaded                                           #
 ##############################################################
 
-DIR_OPENBLAS="${DIR_BLAP}/openblas"
+DIR_OPENBLAS="${DIR_BLAS}/openblas"
 
 function openblas_install {
 
@@ -207,7 +207,7 @@ function openblas_remove {
 # - multi-threaded                                           #
 ##############################################################
 
-DIR_ATLAS_MT="${DIR_BLAP}/atlas-mt"
+DIR_ATLAS_MT="${DIR_BLAS}/atlas-mt"
 
 function atlas_mt_install {
 
@@ -264,7 +264,7 @@ function atlas_mt_remove {
 # - multi-threaded                                           #
 ##############################################################
 
-DIR_GOTOBLAS2="${DIR_BLAP}/gotoblas2"
+DIR_GOTOBLAS2="${DIR_BLAS}/gotoblas2"
 
 function gotoblas2_install {
 
@@ -326,7 +326,7 @@ function gotoblas2_remove {
 # - multi-threaded                                           #
 ##############################################################
 
-DIR_MKL="${DIR_BLAP}/mkl"
+DIR_MKL="${DIR_BLAS}/mkl"
 
 function mkl_install {
 
@@ -373,7 +373,7 @@ function mkl_remove {
 # - multi-threaded                                           #
 ##############################################################
 
-DIR_BLIS="${DIR_BLAP}/blis"
+DIR_BLIS="${DIR_BLAS}/blis"
 
 function blis_install {
 
@@ -431,11 +431,13 @@ function blis_remove {
 # - CUDA                                                     #
 ##############################################################
 
+DIR_CUBLAS="${DIR_BLAS}/cublas"
+
 function cublas_install {
 
     echo "Started installing cuBLAS"
 
-    mkdir /opt/blap-lib/cublas
+    mkdir ${DIR_CUBLAS}
 
     modprobe -r nouveau
 
@@ -443,11 +445,12 @@ function cublas_install {
 
     nvidia-modprobe
 
-    echo "#NVBLAS_LOGFILE       nvblas.log
-    NVBLAS_CPU_BLAS_LIB  /opt/blap-lib/mkl/libRblas.so
+    echo "
+    #NVBLAS_LOGFILE       nvblas.log
+    NVBLAS_CPU_BLAS_LIB  ${DIR_MKL}/libRblas.so
     NVBLAS_GPU_LIST      ALL0
     NVBLAS_TILE_DIM      2048
-    NVBLAS_AUTOPIN_MEM_ENABLED" > /opt/blap-lib/cublas/nvblas.conf
+    NVBLAS_AUTOPIN_MEM_ENABLED" > ${DIR_CUBLAS}/nvblas.conf
     
     apt-get clean
 
@@ -479,7 +482,7 @@ function cublas_check {
 
     echo "Started checking cuBLAS"
 
-    NVBLAS_CONFIG_FILE=/opt/blap-lib/cublas/nvblas.conf LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libnvblas.so.6.0 /usr/lib/x86_64-linux-gnu/libcublas.so.6.0" ${R_SAMPLE_BENCHMARK}
+    NVBLAS_CONFIG_FILE="${DIR_CUBLAS}/nvblas.conf" LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libnvblas.so.6.0 /usr/lib/x86_64-linux-gnu/libcublas.so.6.0" ${R_SAMPLE_BENCHMARK}
     
     echo "Finished checking cuBLAS"
 }
