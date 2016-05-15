@@ -441,7 +441,7 @@ function cublas_install {
 
     modprobe -r nouveau
 
-    DEBIAN_FRONTEND=noninteractive apt-get install nvidia-driver nvidia-modprobe libcuda1 libnvblas6.0 -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" 
+    DEBIAN_FRONTEND=noninteractive apt-get install nvidia-driver nvidia-modprobe libcuda1 libnvblas6.5 -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" 
 
     nvidia-modprobe
 
@@ -501,7 +501,7 @@ function cublas_check {
 
     echo "Started checking cuBLAS"
 
-    NVBLAS_CONFIG_FILE="${DIR_CUBLAS}/nvblas.conf" LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libnvblas.so.6.0 /usr/lib/x86_64-linux-gnu/libcublas.so.6.0" ${R_SAMPLE_BENCHMARK}
+    NVBLAS_CONFIG_FILE="${DIR_CUBLAS}/nvblas.conf" LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libnvblas.so.6.5 /usr/lib/x86_64-linux-gnu/libcublas.so.6.5" ${R_SAMPLE_BENCHMARK}
     
     echo "Finished checking cuBLAS"
 }
