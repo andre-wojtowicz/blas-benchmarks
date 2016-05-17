@@ -6,6 +6,16 @@ CHECKPOINT_DATE="2016-04-01"
 R_SAMPLE_BENCHMARK="Rscript sample-benchmark.R"
 DIR_BLAS="/opt/blas-libs"
 
+if [ ! -f ./cpuinfo ]; then
+    echo "Intel processor family information utility not found, aborting..."
+    exit 1
+fi
+
+PROCESSOR_CORES=`./cpuinfo -g | grep -oP 'Cores( +):( +)\K(\d+)'`
+PROCESSOR_CPUS=`./cpuinfo -g | grep -oP 'Processors\(CPUs\)( +):( +)\K(\d+)'`
+
+NPROC=${PROCESSOR_CORES}
+
 function mro_install {
 
     echo "Started installing Microsoft R Open and dependencies"
@@ -16,7 +26,7 @@ function mro_install {
     DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" upgrade
 
     # install core packages
-    apt-get -y install build-essential gfortran ed htop libxml2-dev ca-certificates curl libcurl4-openssl-dev gdebi-core sshpass git cpufrequtils cmake initramfs-tools linux-headers-$(uname -r)
+    apt-get -y install build-essential gfortran ed htop libxml2-dev ca-certificates curl libcurl4-openssl-dev gdebi-core sshpass git cpufrequtils cmake initramfs-tools linux-headers-$(uname -r) nvidia-detect bc
 
     # disable CPU throttling for ATLAS multi-threading
     echo performance | tee /sys/devices/system/cpu/cpu**/cpufreq/scaling_governor
@@ -277,7 +287,7 @@ function gotoblas2_install {
     rm SurviveGotoBLAS2_3.141.tar.gz
 
     cd survivegotoblas2-3.141
-    make REFBLAS_ANTILOGY=1 NO_CBLAS=1 GOTOBLASLIBSONAME=libgoto2blas.so GOTOLAPACKLIBSONAME=libgoto2lapack.so -j `nproc`
+    make REFBLAS_ANTILOGY=1 NO_CBLAS=1 GOTOBLASLIBSONAME=libgoto2blas.so GOTOLAPACKLIBSONAME=libgoto2lapack.so -j ${NPROC}
     
     cp exports/libgoto2blas.so   ${DIR_GOTOBLAS2}
     cp exports/libgoto2lapack.so ${DIR_GOTOBLAS2}
@@ -299,9 +309,9 @@ function gotoblas2_check {
 
     echo "${DIR_GOTOBLAS2}" > /etc/ld.so.conf.d/gotoblas2.conf
     ldconfig
-    sed "2i\library(RhpcBLASctl); blas_set_num_threads(`nproc`)" sample-benchmark.R > sample-benchmark-gotoblas2.R
+    sed "2i\library(RhpcBLASctl); blas_set_num_threads(${NPROC})" sample-benchmark.R > sample-benchmark-gotoblas2.R
     
-    LD_PRELOAD="${DIR_GOTOBLAS2}/libgoto2blas.so ${DIR_GOTOBLAS2}/libgoto2lapack.so" GOTO_NUM_THREADS=`nproc` Rscript sample-benchmark-gotoblas2.R
+    LD_PRELOAD="${DIR_GOTOBLAS2}/libgoto2blas.so ${DIR_GOTOBLAS2}/libgoto2lapack.so" GOTO_NUM_THREADS=${NPROC} Rscript sample-benchmark-gotoblas2.R
     
     rm /etc/ld.so.conf.d/gotoblas2.conf
     ldconfig
@@ -386,7 +396,7 @@ function blis_install {
     git checkout 0b01d355ae861754ae2da6c9a545474af010f02e
     
     ./configure -t pthreads --enable-shared auto
-    make -j `nproc`
+    make -j ${NPROC}
     cd ..
 
     cp `find ./blis/ -name "libblis.so"` ${DIR_BLIS}
@@ -403,8 +413,72 @@ function blis_check {
 
     echo "Started checking BLIS"
 
-    # TODO: auto set variables according to https://github.com/flame/blis/wiki/Multithreading
-    LD_PRELOAD="${DIR_BLIS}/libblis.so" BLIS_JC_NT=2 BLIS_IC_NT=1 BLIS_JR_NT=1 BLIS_IR_NT=1 ${R_SAMPLE_BENCHMARK}
+    # auto set threading variables (more or less) according to https://github.com/flame/blis/wiki/Multithreading
+    
+    CPU_L3_PRESENT=`./cpuinfo -c | grep -coP "^L3"`
+    CPU_L3_PRIVATE=`./cpuinfo -c | grep -coP "^L3(.*)no sharing"`
+    CPU_L2_PRIVATE=`./cpuinfo -c | grep -coP "^L2(.*)no sharing"`
+    CPU_L1_PRIVATE=`./cpuinfo -c | grep -coP "^L1(.*)no sharing"`
+    
+    COUNT_JC=1
+    COUNT_IC=1
+    COUNT_JR=1
+    COUNT_IR=1
+    
+    PARALLEL_STEPS=`echo "l(${NPROC})/l(2)" | bc -l | grep -oP "^\d+"`
+    PARALLEL_I_LOOP=0
+    PARALLEL_J_LOOP=0
+    
+    while [ $PARALLEL_STEPS -gt 0 ]
+    do
+        if [ $PARALLEL_I_LOOP -lt $PARALLEL_J_LOOP ]; then
+            if [ ${CPU_L2_PRIVATE} -eq 1 ]; then
+                COUNT_IC=$((${COUNT_IC} * 2))
+                PARALLEL_I_LOOP=$((${PARALLEL_I_LOOP} + 1))
+            elif [ ${CPU_L3_PRESENT} -eq 1 -a ${CPU_L3_PRIVATE} -eq 1 ]; then
+                COUNT_JC=$((${COUNT_JC} * 2))
+                PARALLEL_J_LOOP=$((${PARALLEL_J_LOOP} + 1))
+            elif [ ${CPU_L1_PRIVATE} -eq 1 ]; then
+                COUNT_JR=$((${COUNT_JR} * 2))
+                PARALLEL_J_LOOP=$((${PARALLEL_J_LOOP} + 1))
+            else
+                COUNT_IR=$((${COUNT_IR} * 2))
+                PARALLEL_I_LOOP=$((${PARALLEL_I_LOOP} + 1))
+            fi
+        elif [ $PARALLEL_J_LOOP -lt $PARALLEL_I_LOOP ]; then
+            if [ ${CPU_L3_PRESENT} -eq 1 -a ${CPU_L3_PRIVATE} -eq 1 ]; then
+                COUNT_JC=$((${COUNT_JC} * 2))
+                PARALLEL_J_LOOP=$((${PARALLEL_J_LOOP} + 1))
+            elif [ ${CPU_L1_PRIVATE} -eq 1 ]; then
+                COUNT_JR=$((${COUNT_JR} * 2))
+                PARALLEL_J_LOOP=$((${PARALLEL_J_LOOP} + 1))
+            elif [ ${CPU_L2_PRIVATE} -eq 1 ]; then
+                COUNT_IC=$((${COUNT_IC} * 2))
+                PARALLEL_I_LOOP=$((${PARALLEL_I_LOOP} + 1))
+            else
+                COUNT_IR=$((${COUNT_IR} * 2))
+                PARALLEL_I_LOOP=$((${PARALLEL_I_LOOP} + 1))
+            fi
+        else
+            if [ ${CPU_L3_PRESENT} -eq 1 -a ${CPU_L3_PRIVATE} -eq 1 ]; then
+                COUNT_JC=$((${COUNT_JC} * 2))
+                PARALLEL_J_LOOP=$((${PARALLEL_J_LOOP} + 1))
+            elif [ ${CPU_L2_PRIVATE} -eq 1 ]; then
+                COUNT_IC=$((${COUNT_IC} * 2))
+                PARALLEL_I_LOOP=$((${PARALLEL_I_LOOP} + 1))
+            elif [ ${CPU_L1_PRIVATE} -eq 1 ]; then
+                COUNT_JR=$((${COUNT_JR} * 2))
+                PARALLEL_J_LOOP=$((${PARALLEL_J_LOOP} + 1))
+            else
+                COUNT_IR=$((${COUNT_IR} * 2))
+                PARALLEL_I_LOOP=$((${PARALLEL_I_LOOP} + 1))
+            fi
+        fi
+    
+        ((PARALLEL_STEPS--))
+    done    
+    
+    LD_PRELOAD="${DIR_BLIS}/libblis.so" BLIS_JC_NT=${COUNT_JC} BLIS_IC_NT=${COUNT_IC} BLIS_JR_NT=${COUNT_JR} BLIS_IR_NT=${COUNT_IR} ${R_SAMPLE_BENCHMARK}
 
     echo "Finished checking BLIS"
 }
@@ -435,6 +509,11 @@ DIR_CUBLAS="${DIR_BLAS}/cublas"
 
 function cublas_install {
 
+    if [ $(nvidia-detect | grep -c "No NVIDIA GPU detected.") -eq 1 ]; then
+        echo "No NVIDIA GPU detected, cuBLAS installation aborted"
+        return 1
+    fi
+
     echo "Started installing cuBLAS"
 
     mkdir ${DIR_CUBLAS}
@@ -460,6 +539,11 @@ function cublas_install {
 # CUDA 7.5 currently supports linux kernel 3.x
 #
 #function cublas_online_install {
+#
+#    if [ $(nvidia-detect | grep -c "No NVIDIA GPU detected.") -eq 1 ]; then
+#        echo "No NVIDIA GPU detected, cuBLAS online installation aborted"
+#        return 1
+#    fi
 #
 #    echo "Started installing online cuBLAS"
 #
@@ -499,6 +583,11 @@ function cublas_install {
 
 function cublas_check {
 
+    if [ $(nvidia-detect | grep -c "No NVIDIA GPU detected.") -eq 1 ]; then
+        echo "No NVIDIA GPU detected, cuBLAS check aborted"
+        return 1
+    fi
+
     echo "Started checking cuBLAS"
 
     NVBLAS_CONFIG_FILE="${DIR_CUBLAS}/nvblas.conf" LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libnvblas.so.6.5 /usr/lib/x86_64-linux-gnu/libcublas.so.6.5" ${R_SAMPLE_BENCHMARK}
@@ -514,7 +603,16 @@ if [ $# -eq 0 ]; then
     echo "No arguments supplied"
 else
     for i in "$@"
-    do
-        $i
+    do  
+        case "$i" in
+            nproc_cores)
+                NPROC=${PROCESSOR_CORES}
+                ;;
+            nproc_cpus)
+                NPROC=${PROCESSOR_CPUS}
+                ;;
+            *)
+                $i
+        esac
     done
 fi
