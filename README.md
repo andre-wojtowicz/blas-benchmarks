@@ -1,2 +1,2 @@
-# blas-lapack-benchmark
+# blasbenchmarks
 

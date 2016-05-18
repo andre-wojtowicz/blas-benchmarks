@@ -17,3 +17,5 @@ vignettes/*.pdf
 .httr-oauth
 
 cpuinfo
+hosts-list.txt
+ssh/rsa.key
