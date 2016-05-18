@@ -522,6 +522,8 @@ function cublas_install {
 
     mkdir ${DIR_CUBLAS}
 
+    # see: https://nouveau.freedesktop.org/wiki/KernelModeSetting/ and https://askubuntu.com/questions/16998/switch-between-nvidia-current-and-nouveau-without-a-reboot
+    echo 0 > /sys/class/vtconsole/vtcon1/bind 
     modprobe -r nouveau
 
     DEBIAN_FRONTEND=noninteractive apt-get install nvidia-driver nvidia-modprobe libcuda1 libnvblas6.5 -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" 
@@ -529,11 +531,11 @@ function cublas_install {
     nvidia-modprobe
 
     echo "
-    #NVBLAS_LOGFILE       nvblas.log
+    NVBLAS_LOGFILE       /dev/null
     NVBLAS_CPU_BLAS_LIB  ${DIR_MKL}/libRblas.so
     NVBLAS_GPU_LIST      ALL0
     NVBLAS_TILE_DIM      2048
-    NVBLAS_AUTOPIN_MEM_ENABLED" > ${DIR_CUBLAS}/nvblas.conf
+    #NVBLAS_AUTOPIN_MEM_ENABLED" > ${DIR_CUBLAS}/nvblas.conf
 
     apt-get clean
 
@@ -553,6 +555,8 @@ function cublas_install {
 #
 #    mkdir ${DIR_CUBLAS}
 #
+#    # see: https://nouveau.freedesktop.org/wiki/KernelModeSetting/ and https://askubuntu.com/questions/16998/switch-between-nvidia-current-and-nouveau-without-a-reboot
+#    echo 0 > /sys/class/vtconsole/vtcon1/bind 
 #    modprobe -r nouveau
 #
 #    # Ubuntu dependencies
@@ -570,11 +574,11 @@ function cublas_install {
 #    nvidia-modprobe
 #
 #    echo "
-#    #NVBLAS_LOGFILE       nvblas.log
+#    NVBLAS_LOGFILE        /dev/null
 #    NVBLAS_CPU_BLAS_LIB   ${DIR_MKL}/libRblas.so
 #    NVBLAS_GPU_LIST       ALL0
 #    NVBLAS_TILE_DIM       2048
-#    NVBLAS_AUTOPIN_MEM_ENABLED" > ${DIR_CUBLAS}/nvblas.conf
+#    #NVBLAS_AUTOPIN_MEM_ENABLED" > ${DIR_CUBLAS}/nvblas.conf
 #
 #    rm python3-xkit_0.5.0ubuntu2_all.deb
 #    rm screen-resolution-extra_0.17.1_all.deb
