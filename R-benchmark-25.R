@@ -1,5 +1,7 @@
 # source: http://r.research.att.com/benchmarks/R-benchmark-25.R
 
+library(methods) # for Rscript
+
 # R Benchmark 2.5 (06/2008) [Simon Urbanek]
 # version 2.5: scaled to get roughly 1s per test, R 2.7.0 @ 2.6GHz Mac Pro
 # R Benchmark 2.4 (06/2008) [Simon Urbanek]

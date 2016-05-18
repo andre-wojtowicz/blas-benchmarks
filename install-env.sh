@@ -3,7 +3,7 @@
 WGET_OPTIONS="--no-check-certificate"
 MRO_VERSION="3.2.4"
 CHECKPOINT_DATE="2016-04-01"
-R_SAMPLE_BENCHMARK="Rscript sample-benchmark.R"
+R_BENCHMARK_SCRIPT="sample-benchmark.R"
 DIR_BLAS="/opt/blas-libs"
 
 if [ ! -f ./cpuinfo ]; then
@@ -48,6 +48,8 @@ function mro_install {
     mkdir ~/.checkpoint
     Rscript -e "library(checkpoint); checkpoint('${CHECKPOINT_DATE}')"
     sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" sample-benchmark.R
+    sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" revolution-benchmark.R
+    sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" R-benchmark-25.R
 
     # make directory for BLAS and LAPACK libraries
     mkdir -p ${DIR_BLAS}
@@ -107,7 +109,7 @@ function netlib_check {
 
     echo "Started checking netlib."
 
-    LD_PRELOAD="${DIR_NETLIB}/libblas.so.3.0 ${DIR_NETLIB}/liblapack.so.3.0" ${R_SAMPLE_BENCHMARK}
+    LD_PRELOAD="${DIR_NETLIB}/libblas.so.3.0 ${DIR_NETLIB}/liblapack.so.3.0" Rscript ${R_BENCHMARK_SCRIPT}
 
     echo "Finished checking netlib"
 }
@@ -147,7 +149,7 @@ function atlas_st_check {
 
     echo "Started checking ATLAS (single-threaded)"
 
-    LD_PRELOAD="${DIR_ATLAS_ST}/libatlas.so.3 ${DIR_ATLAS_ST}/libblas.so.3 ${DIR_ATLAS_ST}/liblapack.so.3" ${R_SAMPLE_BENCHMARK}
+    LD_PRELOAD="${DIR_ATLAS_ST}/libatlas.so.3 ${DIR_ATLAS_ST}/libblas.so.3 ${DIR_ATLAS_ST}/liblapack.so.3" Rscript ${R_BENCHMARK_SCRIPT}
 
     echo "Finished checking ATLAS (single-threaded)"
 }
@@ -196,7 +198,7 @@ function openblas_check {
 
     echo "Started checking OpenBLAS"
 
-    LD_PRELOAD="${DIR_OPENBLAS}/libopenblas.so.0 ${DIR_OPENBLAS}/libblas.so.3 ${DIR_OPENBLAS}/liblapack.so.3" ${R_SAMPLE_BENCHMARK}
+    LD_PRELOAD="${DIR_OPENBLAS}/libopenblas.so.0 ${DIR_OPENBLAS}/libblas.so.3 ${DIR_OPENBLAS}/liblapack.so.3" Rscript ${R_BENCHMARK_SCRIPT}
 
     echo "Finished checking OpenBLAS"
 }
@@ -235,6 +237,8 @@ function atlas_mt_install {
 
     wget ${WGET_OPTIONS} http://www.netlib.org/lapack/lapack-3.6.0.tgz
 
+    sed -i "1423i\thrchk=0;" ../CONFIG/src/config.c
+
     ../configure --shared --with-netlib-lapack-tarfile=`pwd`/lapack-3.6.0.tgz
     make
 
@@ -253,7 +257,7 @@ function atlas_mt_check {
 
     echo "Started checking ATLAS (multi-threaded)"
 
-    LD_PRELOAD="${DIR_ATLAS_MT}/libtatlas.so" ${R_SAMPLE_BENCHMARK}
+    LD_PRELOAD="${DIR_ATLAS_MT}/libtatlas.so" Rscript ${R_BENCHMARK_SCRIPT}
 
     echo "Finished checking ATLAS (multi-threaded)"
 }
@@ -309,13 +313,13 @@ function gotoblas2_check {
 
     echo "${DIR_GOTOBLAS2}" > /etc/ld.so.conf.d/gotoblas2.conf
     ldconfig
-    sed "2i\library(RhpcBLASctl); blas_set_num_threads(${NPROC})" sample-benchmark.R > sample-benchmark-gotoblas2.R
+    sed "2i\library(RhpcBLASctl); blas_set_num_threads(${NPROC})" ${R_BENCHMARK_SCRIPT} > benchmark-gotoblas2.R
     
-    LD_PRELOAD="${DIR_GOTOBLAS2}/libgoto2blas.so ${DIR_GOTOBLAS2}/libgoto2lapack.so" GOTO_NUM_THREADS=${NPROC} Rscript sample-benchmark-gotoblas2.R
+    LD_PRELOAD="${DIR_GOTOBLAS2}/libgoto2blas.so ${DIR_GOTOBLAS2}/libgoto2lapack.so" GOTO_NUM_THREADS=${NPROC} Rscript benchmark-gotoblas2.R
     
     rm /etc/ld.so.conf.d/gotoblas2.conf
     ldconfig
-    rm sample-benchmark-gotoblas2.R
+    rm benchmark-gotoblas2.R
 
     echo "Finished checking GotoBLAS2"
 }
@@ -362,7 +366,7 @@ function mkl_check {
 
     echo "Started checking MKL"
 
-    LD_PRELOAD="${DIR_MKL}/libRblas.so ${DIR_MKL}/libRlapack.so ${DIR_MKL}/libmkl_vml_mc3.so ${DIR_MKL}/libmkl_vml_def.so ${DIR_MKL}/libmkl_gnu_thread.so ${DIR_MKL}/libmkl_core.so ${DIR_MKL}/libmkl_gf_lp64.so ${DIR_MKL}/libiomp5.so ${DIR_MKL}/libmkl_gf_ilp64.so" MKL_INTERFACE_LAYER="GNU,LP64" MKL_THREADING_LAYER="GNU" ${R_SAMPLE_BENCHMARK}
+    LD_PRELOAD="${DIR_MKL}/libRblas.so ${DIR_MKL}/libRlapack.so ${DIR_MKL}/libmkl_vml_mc3.so ${DIR_MKL}/libmkl_vml_def.so ${DIR_MKL}/libmkl_gnu_thread.so ${DIR_MKL}/libmkl_core.so ${DIR_MKL}/libmkl_gf_lp64.so ${DIR_MKL}/libiomp5.so ${DIR_MKL}/libmkl_gf_ilp64.so" MKL_INTERFACE_LAYER="GNU,LP64" MKL_THREADING_LAYER="GNU" Rscript ${R_BENCHMARK_SCRIPT}
 
     echo "Finished checking MKL"
 }
@@ -393,7 +397,7 @@ function blis_install {
 
     git clone https://github.com/flame/blis.git
     cd blis
-    git checkout 0b01d355ae861754ae2da6c9a545474af010f02e
+    git checkout 32db0adc218ea4ae370164dbe8d23b41cd3526d3 # 17.05.2016
     
     ./configure -t pthreads --enable-shared auto
     make -j ${NPROC}
@@ -478,7 +482,7 @@ function blis_check {
         ((PARALLEL_STEPS--))
     done    
     
-    LD_PRELOAD="${DIR_BLIS}/libblis.so" BLIS_JC_NT=${COUNT_JC} BLIS_IC_NT=${COUNT_IC} BLIS_JR_NT=${COUNT_JR} BLIS_IR_NT=${COUNT_IR} ${R_SAMPLE_BENCHMARK}
+    LD_PRELOAD="${DIR_BLIS}/libblis.so" BLIS_JC_NT=${COUNT_JC} BLIS_IC_NT=${COUNT_IC} BLIS_JR_NT=${COUNT_JR} BLIS_IR_NT=${COUNT_IR} Rscript ${R_BENCHMARK_SCRIPT}
 
     echo "Finished checking BLIS"
 }
@@ -590,7 +594,7 @@ function cublas_check {
 
     echo "Started checking cuBLAS"
 
-    NVBLAS_CONFIG_FILE="${DIR_CUBLAS}/nvblas.conf" LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libnvblas.so.6.5 /usr/lib/x86_64-linux-gnu/libcublas.so.6.5" ${R_SAMPLE_BENCHMARK}
+    NVBLAS_CONFIG_FILE="${DIR_CUBLAS}/nvblas.conf" LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libnvblas.so.6.5 /usr/lib/x86_64-linux-gnu/libcublas.so.6.5" Rscript ${R_BENCHMARK_SCRIPT}
     
     echo "Finished checking cuBLAS"
 }
@@ -610,6 +614,15 @@ else
                 ;;
             nproc_cpus)
                 NPROC=${PROCESSOR_CPUS}
+                ;;
+            test_sample)
+                R_BENCHMARK_SCRIPT="sample-benchmark.R"
+                ;;
+            test_urbanek)
+                R_BENCHMARK_SCRIPT="R-benchmark-25.R"
+                ;;
+            test_revolution)
+                R_BENCHMARK_SCRIPT="revolution-benchmark.R"
                 ;;
             *)
                 $i
