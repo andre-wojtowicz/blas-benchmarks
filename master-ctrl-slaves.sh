@@ -19,6 +19,13 @@ function configure_hosts {
             echo "error $ret"; continue
         fi
         
+        echo -n "cpuinfo-chmod "
+        ssh ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} root@${host} 'chmod +x cpuinfo'
+        ret=$?
+        if [ $ret -ne 0 ] ; then
+            echo "error $ret"; continue
+        fi
+        
         echo "config-run "
         { ssh ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} root@${host} 'bash slave-cmds.sh mro_install netlib_install atlas_st_install openblas_install atlas_mt_install gotoblas2_install mkl_install blis_install cublas_install > install.log 2>&1' ;
           scp ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} root@${host}:/root/install.log install-${host}.log;
