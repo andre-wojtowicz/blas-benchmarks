@@ -3,7 +3,7 @@
 WGET_OPTIONS="--no-check-certificate"
 MRO_VERSION="3.2.4"
 CHECKPOINT_DATE="2016-04-01"
-R_BENCHMARK_SCRIPT="sample-benchmark.R"
+R_BENCHMARK_SCRIPT="benchmark-sample.R"
 DIR_BLAS="/opt/blas-libs"
 
 if [ ! -f ./cpuinfo ]; then
@@ -19,6 +19,11 @@ NPROC=${PROCESSOR_CORES}
 function mro_install {
 
     echo "Started installing Microsoft R Open and dependencies"
+    
+    # save host info
+    ./cpuinfo -g | grep -oP 'Processor name( +):( +)\K(.+)' > host-info.log
+    cat /proc/meminfo | grep -oP 'MemTotal:( +)\K(\d+)' >> host-info.log
+    lspci -nn | grep -oP "VGA.*\KNVIDIA.*?]" >> host-info.log
 
     # update debian repos & upgrade packages
     echo "deb http://snapshot.debian.org/archive/debian/20160411T102554Z/ jessie-backports main" >> /etc/apt/sources.list
@@ -47,9 +52,9 @@ function mro_install {
     # prepare R checkpoint
     mkdir ~/.checkpoint
     Rscript -e "library(checkpoint); checkpoint('${CHECKPOINT_DATE}')"
-    sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" sample-benchmark.R
-    sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" revolution-benchmark.R
-    sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" R-benchmark-25.R
+    sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" benchmark-sample.R
+    sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" benchmark-urbanek.R
+    sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" benchmark-revolution.R
 
     # make directory for BLAS and LAPACK libraries
     mkdir -p ${DIR_BLAS}
@@ -107,9 +112,9 @@ function netlib_remove {
 
 function netlib_check {
 
-    echo "Started checking netlib."
+    echo "Started checking netlib"
 
-    LD_PRELOAD="${DIR_NETLIB}/libblas.so.3.0 ${DIR_NETLIB}/liblapack.so.3.0" Rscript ${R_BENCHMARK_SCRIPT}
+    LD_PRELOAD="${DIR_NETLIB}/libblas.so.3.0 ${DIR_NETLIB}/liblapack.so.3.0" Rscript -e "blasLibName='netlib'; source('${R_BENCHMARK_SCRIPT}')"
 
     echo "Finished checking netlib"
 }
@@ -149,7 +154,7 @@ function atlas_st_check {
 
     echo "Started checking ATLAS (single-threaded)"
 
-    LD_PRELOAD="${DIR_ATLAS_ST}/libatlas.so.3 ${DIR_ATLAS_ST}/libblas.so.3 ${DIR_ATLAS_ST}/liblapack.so.3" Rscript ${R_BENCHMARK_SCRIPT}
+    LD_PRELOAD="${DIR_ATLAS_ST}/libatlas.so.3 ${DIR_ATLAS_ST}/libblas.so.3 ${DIR_ATLAS_ST}/liblapack.so.3" Rscript -e "blasLibName='atlas_st'; source('${R_BENCHMARK_SCRIPT}')"
 
     echo "Finished checking ATLAS (single-threaded)"
 }
@@ -198,7 +203,7 @@ function openblas_check {
 
     echo "Started checking OpenBLAS"
 
-    LD_PRELOAD="${DIR_OPENBLAS}/libopenblas.so.0 ${DIR_OPENBLAS}/libblas.so.3 ${DIR_OPENBLAS}/liblapack.so.3" Rscript ${R_BENCHMARK_SCRIPT}
+    LD_PRELOAD="${DIR_OPENBLAS}/libopenblas.so.0 ${DIR_OPENBLAS}/libblas.so.3 ${DIR_OPENBLAS}/liblapack.so.3" Rscript -e "blasLibName='openblas'; source('${R_BENCHMARK_SCRIPT}')"
 
     echo "Finished checking OpenBLAS"
 }
@@ -257,7 +262,7 @@ function atlas_mt_check {
 
     echo "Started checking ATLAS (multi-threaded)"
 
-    LD_PRELOAD="${DIR_ATLAS_MT}/libtatlas.so" Rscript ${R_BENCHMARK_SCRIPT}
+    LD_PRELOAD="${DIR_ATLAS_MT}/libtatlas.so" Rscript -e "blasLibName='atlas_mt'; source('${R_BENCHMARK_SCRIPT}')"
 
     echo "Finished checking ATLAS (multi-threaded)"
 }
@@ -313,13 +318,11 @@ function gotoblas2_check {
 
     echo "${DIR_GOTOBLAS2}" > /etc/ld.so.conf.d/gotoblas2.conf
     ldconfig
-    sed "2i\library(RhpcBLASctl); blas_set_num_threads(${NPROC})" ${R_BENCHMARK_SCRIPT} > benchmark-gotoblas2.R
     
-    LD_PRELOAD="${DIR_GOTOBLAS2}/libgoto2blas.so ${DIR_GOTOBLAS2}/libgoto2lapack.so" GOTO_NUM_THREADS=${NPROC} Rscript benchmark-gotoblas2.R
+    LD_PRELOAD="${DIR_GOTOBLAS2}/libgoto2blas.so ${DIR_GOTOBLAS2}/libgoto2lapack.so" GOTO_NUM_THREADS=${NPROC} Rscript -e "blasLibName='gotoblas2'; library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE); library(RhpcBLASctl); blas_set_num_threads(${NPROC}); source('${R_BENCHMARK_SCRIPT}')"
     
     rm /etc/ld.so.conf.d/gotoblas2.conf
     ldconfig
-    rm benchmark-gotoblas2.R
 
     echo "Finished checking GotoBLAS2"
 }
@@ -366,7 +369,7 @@ function mkl_check {
 
     echo "Started checking MKL"
 
-    LD_PRELOAD="${DIR_MKL}/libRblas.so ${DIR_MKL}/libRlapack.so ${DIR_MKL}/libmkl_vml_mc3.so ${DIR_MKL}/libmkl_vml_def.so ${DIR_MKL}/libmkl_gnu_thread.so ${DIR_MKL}/libmkl_core.so ${DIR_MKL}/libmkl_gf_lp64.so ${DIR_MKL}/libiomp5.so ${DIR_MKL}/libmkl_gf_ilp64.so" MKL_INTERFACE_LAYER="GNU,LP64" MKL_THREADING_LAYER="GNU" Rscript ${R_BENCHMARK_SCRIPT}
+    LD_PRELOAD="${DIR_MKL}/libRblas.so ${DIR_MKL}/libRlapack.so ${DIR_MKL}/libmkl_vml_mc3.so ${DIR_MKL}/libmkl_vml_def.so ${DIR_MKL}/libmkl_gnu_thread.so ${DIR_MKL}/libmkl_core.so ${DIR_MKL}/libmkl_gf_lp64.so ${DIR_MKL}/libiomp5.so ${DIR_MKL}/libmkl_gf_ilp64.so" MKL_INTERFACE_LAYER="GNU,LP64" MKL_THREADING_LAYER="GNU" Rscript -e "blasLibName='mkl'; source('${R_BENCHMARK_SCRIPT}')"
 
     echo "Finished checking MKL"
 }
@@ -482,7 +485,7 @@ function blis_check {
         ((PARALLEL_STEPS--))
     done    
     
-    LD_PRELOAD="${DIR_BLIS}/libblis.so" BLIS_JC_NT=${COUNT_JC} BLIS_IC_NT=${COUNT_IC} BLIS_JR_NT=${COUNT_JR} BLIS_IR_NT=${COUNT_IR} Rscript ${R_BENCHMARK_SCRIPT}
+    LD_PRELOAD="${DIR_BLIS}/libblis.so" BLIS_JC_NT=${COUNT_JC} BLIS_IC_NT=${COUNT_IC} BLIS_JR_NT=${COUNT_JR} BLIS_IR_NT=${COUNT_IR} Rscript -e "blasLibName='blis'; source('${R_BENCHMARK_SCRIPT}')"
 
     echo "Finished checking BLIS"
 }
@@ -598,7 +601,7 @@ function cublas_check {
 
     echo "Started checking cuBLAS"
 
-    NVBLAS_CONFIG_FILE="${DIR_CUBLAS}/nvblas.conf" LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libnvblas.so.6.5 /usr/lib/x86_64-linux-gnu/libcublas.so.6.5" Rscript ${R_BENCHMARK_SCRIPT}
+    NVBLAS_CONFIG_FILE="${DIR_CUBLAS}/nvblas.conf" LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libnvblas.so.6.5 /usr/lib/x86_64-linux-gnu/libcublas.so.6.5" Rscript -e "blasLibName='cublas'; source('${R_BENCHMARK_SCRIPT}')"
     
     echo "Finished checking cuBLAS"
 }
@@ -620,13 +623,13 @@ else
                 NPROC=${PROCESSOR_CPUS}
                 ;;
             test_sample)
-                R_BENCHMARK_SCRIPT="sample-benchmark.R"
+                R_BENCHMARK_SCRIPT="benchmark-sample.R"
                 ;;
             test_urbanek)
-                R_BENCHMARK_SCRIPT="R-benchmark-25.R"
+                R_BENCHMARK_SCRIPT="benchmark-urbanek.R"
                 ;;
             test_revolution)
-                R_BENCHMARK_SCRIPT="revolution-benchmark.R"
+                R_BENCHMARK_SCRIPT="benchmark-revolution.R"
                 ;;
             *)
                 $i

@@ -13,7 +13,7 @@ function configure_hosts {
         echo -n "${host} ... "
         
         echo -n "config-push "
-        scp ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} slave-cmds.sh cpuinfo sample-benchmark.R R-benchmark-25.R revolution-benchmark.R root@${host}:/root
+        scp ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} slave-cmds.sh cpuinfo benchmark-sample.R benchmark-urbanek.R benchmark-revolution.R root@${host}:/root
         ret=$?
         if [ $ret -ne 0 ] ; then
             echo "error $ret"; continue
@@ -29,6 +29,7 @@ function configure_hosts {
         echo "config-run "
         { ssh ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} root@${host} 'bash slave-cmds.sh mro_install netlib_install atlas_st_install openblas_install atlas_mt_install gotoblas2_install mkl_install blis_install cublas_install > install.log 2>&1' ;
           scp ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} root@${host}:/root/install.log install-${host}.log;
+          scp ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} root@${host}:/root/host-info.log host-info-${host}.log;
           echo "${host} finished" ; } &
         
     done
@@ -59,6 +60,15 @@ function benchmark {
         echo "benchmark-run "
         { ssh ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} root@${host} "bash slave-cmds.sh test_${BENCHMARK_TEST} netlib_check atlas_st_check openblas_check atlas_mt_check gotoblas2_check mkl_check blis_check cublas_check > test-${BENCHMARK_TEST}.log 2>&1" ;
           scp ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} root@${host}:/root/test-${BENCHMARK_TEST}.log test-${BENCHMARK_TEST}-${host}.log;
+          
+          scp ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} root@${host}:/root/test-${BENCHMARK_TEST}-netlib.rds test-${BENCHMARK_TEST}-${host}-netlib.rds;
+          scp ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} root@${host}:/root/test-${BENCHMARK_TEST}-atlas_st.rds test-${BENCHMARK_TEST}-${host}-atlas_st.rds;
+          scp ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} root@${host}:/root/test-${BENCHMARK_TEST}-openblas.rds test-${BENCHMARK_TEST}-${host}-openblas.rds;
+          scp ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} root@${host}:/root/test-${BENCHMARK_TEST}-atlas_mt.rds test-${BENCHMARK_TEST}-${host}-atlas_mt.rds;
+          scp ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} root@${host}:/root/test-${BENCHMARK_TEST}-gotoblas2.rds test-${BENCHMARK_TEST}-${host}-gotoblas2.rds;
+          scp ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} root@${host}:/root/test-${BENCHMARK_TEST}-mkl.rds test-${BENCHMARK_TEST}-${host}-mkl.rds;
+          scp ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} root@${host}:/root/test-${BENCHMARK_TEST}-blis.rds test-${BENCHMARK_TEST}-${host}-blis.rds;
+          scp ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} root@${host}:/root/test-${BENCHMARK_TEST}-cublas.rds test-${BENCHMARK_TEST}-${host}-cublas.rds 2> /dev/null;
           echo "${host} finished" ; } &
     done
 
