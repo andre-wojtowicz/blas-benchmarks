@@ -55,6 +55,7 @@ function mro_install {
     sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" benchmark-sample.R
     sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" benchmark-urbanek.R
     sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" benchmark-revolution.R
+    sed -i "1i\library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE)" benchmark-gcbd.R
 
     # make directory for BLAS and LAPACK libraries
     mkdir -p ${DIR_BLAS}
@@ -630,6 +631,9 @@ else
                 ;;
             test_revolution)
                 R_BENCHMARK_SCRIPT="benchmark-revolution.R"
+                ;;
+            test_gcbd)
+                R_BENCHMARK_SCRIPT="benchmark-gcbd.R"
                 ;;
             *)
                 $i

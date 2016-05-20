@@ -13,7 +13,7 @@ function configure_hosts {
         echo -n "${host} ... "
         
         echo -n "config-push "
-        scp ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} slave-cmds.sh cpuinfo benchmark-sample.R benchmark-urbanek.R benchmark-revolution.R root@${host}:/root
+        scp ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} slave-cmds.sh cpuinfo benchmark-sample.R benchmark-urbanek.R benchmark-revolution.R benchmark-gcbd.R root@${host}:/root
         ret=$?
         if [ $ret -ne 0 ] ; then
             echo "error $ret"; continue
@@ -46,6 +46,23 @@ function configure_hosts {
     done
 
     echo "* All hosts configured"
+
+}
+
+function power_off {
+
+    echo "* Power-off hosts:"
+
+    for host in `cat hosts-list.txt`
+    do
+        echo -n "${host} ... "
+        
+        echo "power off "
+        ssh ${SSH_OPTIONS} -i ssh/${SSH_KEY_PRIV} root@${host} 'poweroff'
+        
+    done
+
+    echo "* Done"
 
 }
 
@@ -99,6 +116,9 @@ else
             configure_hosts)
                 configure_hosts
                 ;;
+            power_off)
+                power_off
+                ;;
             test_sample)
                 BENCHMARK_TEST="sample"
                 benchmark
@@ -109,6 +129,10 @@ else
                 ;;
             test_revolution)
                 BENCHMARK_TEST="revolution"
+                benchmark
+                ;;
+            test_gcbd)
+                BENCHMARK_TEST="gcbd"
                 benchmark
                 ;;
             *)
