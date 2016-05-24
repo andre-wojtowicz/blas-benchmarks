@@ -20,3 +20,4 @@ cpuinfo
 hosts-list.txt
 ssh/rsa.key
 *.rds
+*.html

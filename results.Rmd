@@ -1,0 +1,106 @@
+---
+title: "Results"
+author: "Andrzej Wójtowicz"
+output: html_document
+---
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(checkpoint)
+checkpoint("2016-04-01", scanForPackages=FALSE, verbose=FALSE)
+library(reshape2)
+```
+
+```{r, echo=FALSE}
+
+HOSTNAMES = suppressWarnings(readLines("hosts-list.txt"))
+
+BENCHMARKS = c("urbanek",
+               "revolution",
+               "gcbd")
+
+LIBRARIES = c("netlib",
+              "atlas_st",
+              "openblas",
+              "atlas_mt",
+              "gotoblas2",
+              "mkl",
+              "blis",
+              "cublas")
+
+HOST.INFO.PATTERN = "host-info-<HOST>.log"
+BENCHMKAR.PATTERN = "test-<BENCHMARK>-<HOST>-<LIBRARY>.rds"
+
+RESULTS.DIR = "results"
+
+```
+
+```{r, echo=FALSE}
+
+hosts.info = data.frame(Host=character(), CPU=character(), GPU=character())
+
+for (hostname in HOSTNAMES)
+{
+    fp = file.path(RESULTS.DIR, gsub("<HOST>", hostname, HOST.INFO.PATTERN))
+    
+    if (file.exists(fp))
+    {
+        dr = readLines(fp)
+        dr = unname(sapply(dr, trimws))
+        
+        hosts.info = rbind(hosts.info,
+                           data.frame(Host= hostname, 
+                                      CPU = dr[1], 
+                                      GPU = ifelse(length(dr)==3, dr[3], NA)))
+    }
+}
+
+benchmark.results = data.frame(Host=character(), Benchmark=character(), 
+                               Library=character(), Test=character(),
+                               Runs=integer(), Size=integer(),
+                               Time=numeric())
+
+for (host in hosts.info$Host)
+{
+    for (benchmark in BENCHMARKS)
+    {
+        for (lib in LIBRARIES)
+        {
+            fp = file.path(RESULTS.DIR, gsub("<HOST>", host, (
+                                        gsub("<LIBRARY>", lib, ( 
+                                        gsub("<BENCHMARK>", benchmark, BENCHMKAR.PATTERN)))))
+                           )
+            
+            if (file.exists(fp))
+            {
+                db = readRDS(fp)
+                
+                runs = NA
+                if (length(attr(db, "runs"))==1) {
+                    runs = attr(db, "runs")
+                } else {
+                    # gcbd
+                    db = melt(cbind(db, runs=attr(db, "runs"), 
+                                    size=attr(db, "size")), 
+                              id.vars=c("runs", "size"), 
+                              variable.name="name", 
+                              value.name="time")
+                    runs = db$runs
+                }
+                
+                size = NA
+                if ("size" %in% colnames(db)) # gcbd
+                    size = db$size
+                
+                benchmark.results = rbind(benchmark.results,
+                    data.frame(Host=host, Benchmark=benchmark, 
+                               Library=lib, Test=db$name, 
+                               Runs=runs, Size=size,
+                               Time=db$time))
+            }
+        }
+    }
+}
+
+```
+
