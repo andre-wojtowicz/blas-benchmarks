@@ -143,12 +143,14 @@ for (host in hosts.info$Host)
     if (!is.na(host.gpu))
         cat(paste(" +", host.gpu))
     
-    cat("\n\n")
+    cat("\n\n\n\n")
     
     for (benchmark in BENCHMARKS)
     {
-        if (benchmark != "urbanek")
+        if (benchmark == "gcbd")
             next
+        
+        cat(paste0("## ", paste(toupper(substring(benchmark, 1,1)), substring(benchmark, 2),sep="", collapse=" "), " benchmark\n\n"))
         
         testnames = benchmark.results %>% 
             filter(Benchmark == benchmark) %>% 
@@ -170,8 +172,18 @@ for (host in hosts.info$Host)
                 filter(Host == host & Benchmark == benchmark &
                        Test == test)
             
-            data.to.plot$Library = factor(data.to.plot$Library,
-                levels=rev(levels(data.to.plot$Library)))
+            data.to.plot = data.to.plot %>% 
+                mutate(PerfGain=data.to.plot[which(data.to.plot$Library==LIBRARY.REF), "Time"]/Time)
+            
+            levels(data.to.plot$Library) = list(
+                "cuBLAS"="cublas",
+                "BLIS"="blis",
+                "MKL"="mkl",
+                "ATLAS (mt)"="atlas_mt",
+                "OpenBLAS"="openblas",
+                "GotoBLAS2"="gotoblas2",
+                "ATLAS (st)"="atlas_st",
+                "Netlib"="netlib")
             
             image.path = file.path(IMAGES.DIR,
                paste0("img_ph", 
@@ -180,25 +192,33 @@ for (host in hosts.info$Host)
                       "_t", i,
                       ".png"))
             
-            png(image.path, width=500, height=50*nrow(data.to.plot))
+            cat(paste0("#### ", gsub(" \\(.*\\)", "", test)), "\n\n")
+            cat("Time in seconds - lower is better\n\n")
+            
+            png(image.path, width=600, height=50*nrow(data.to.plot))
                 print(ggplot(data.to.plot, aes(x=Library, y=Time)) +
                     theme_classic() + 
                     theme(
-                        panel.border = element_blank()
+                        panel.border = element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank(),
+                        axis.text.x = element_text(colour="grey60"),
+                        axis.ticks.x=element_line(color="grey60"),
+                        axis.ticks.y=element_line(color="grey60")
                     ) +
                     scale_y_continuous(expand = c(0, 0), 
-                        limits = c(0, 1.12*max(data.to.plot$Time))) +
-                    ggtitle(test) + 
-                    ylab("Seconds (performance gain)") +
+                                       limits = c(0, 1.20*max(data.to.plot$Time))) +
                     geom_bar(stat="identity", width=.75) + 
-                    geom_text(aes(label=round(Time, 2)), hjust=-0.25) +
                     coord_flip() + 
-                    geom_hline(yintercept = 0) + 
-                    geom_vline(xintercept = 0.39)
+                    geom_text(aes(y=Time, x=Library, label=as.character(round(Time, 2))), hjust=-0.25, size=3, colour="grey45") +
+                    geom_text(aes(y=1.15*max(data.to.plot$Time), x=Library, label=paste0("x", round(PerfGain, 1))), hjust=1, size=4) +
+                    geom_hline(yintercept = 0, color="grey") + 
+                    geom_vline(xintercept = 0.4, color="grey") +
+                    annotate("text", x=nrow(data.to.plot)/2, y=1.19*max(data.to.plot$Time), label="Performance gain", angle=-90, hjust=0.6)
                 ) 
             dev.off()
             
-            cat(paste0("![](", image.path, ")\n\n"))
+            cat(paste0("![](", image.path, ")\n\n\n\n"))
         }
         
         
