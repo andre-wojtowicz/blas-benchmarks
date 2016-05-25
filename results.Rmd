@@ -5,13 +5,15 @@ output: html_document
 ---
 
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r checkpoint, echo=FALSE, warning=FALSE, message=FALSE}
 library(checkpoint)
 checkpoint("2016-04-01", scanForPackages=FALSE, verbose=FALSE)
 library(reshape2)
+library(dplyr)
+library(ggplot2)
 ```
 
-```{r, echo=FALSE}
+```{r config, echo=FALSE}
 
 HOSTNAMES = suppressWarnings(readLines("hosts-list.txt"))
 
@@ -28,14 +30,23 @@ LIBRARIES = c("netlib",
               "blis",
               "cublas")
 
+LIBRARY.REF = "netlib"
+
 HOST.INFO.PATTERN = "host-info-<HOST>.log"
 BENCHMKAR.PATTERN = "test-<BENCHMARK>-<HOST>-<LIBRARY>.rds"
 
 RESULTS.DIR = "results"
+GEN.DIR     = "gen"
+DATA.DIR    = file.path(GEN.DIR, "data")
+IMAGES.DIR  = file.path(GEN.DIR, "img")
 
 ```
 
-```{r, echo=FALSE}
+```{r read-write-data, echo=FALSE}
+
+for (d in c(GEN.DIR, DATA.DIR, IMAGES.DIR))
+    if (!dir.exists(d))
+        dir.create(d)
 
 hosts.info = data.frame(Host=character(), CPU=character(), GPU=character())
 
@@ -49,13 +60,17 @@ for (hostname in HOSTNAMES)
         dr = unname(sapply(dr, trimws))
         
         hosts.info = rbind(hosts.info,
-                           data.frame(Host= hostname, 
-                                      CPU = dr[1], 
-                                      GPU = ifelse(length(dr)==3, dr[3], NA)))
+            data.frame(Host= hostname, 
+                       CPU = gsub("\\(.*?\\)", "", dr[1]), 
+                       GPU = ifelse(length(dr)==3,
+                        gsub("(NVIDIA).*\\[(.*)\\]", "\\1 \\2", dr[3]), NA)))
     } else {
         warning(paste("File", fp, "does not exist"))
     }
 }
+
+saveRDS(hosts.info, file.path(DATA.DIR, "hosts.info.rds"))
+
 
 benchmark.results = data.frame(Host=character(), Benchmark=character(), 
                                Library=character(), Test=character(),
@@ -110,5 +125,84 @@ for (host in hosts.info$Host)
     }
 }
 
+saveRDS(benchmark.results, file.path(DATA.DIR, "benchmark.results.rds"))
+
 ```
 
+```{r per-host, echo=FALSE, results='asis'}
+
+cat("# Per host\n\n")
+
+for (host in hosts.info$Host)
+{
+    host.cpu = hosts.info[which(hosts.info$Host==host), "CPU"]
+    host.gpu = hosts.info[which(hosts.info$Host==host), "GPU"]
+    
+    cat(paste("##", host.cpu))
+    
+    if (!is.na(host.gpu))
+        cat(paste(" +", host.gpu))
+    
+    cat("\n\n")
+    
+    for (benchmark in BENCHMARKS)
+    {
+        if (benchmark != "urbanek")
+            next
+        
+        testnames = benchmark.results %>% 
+            filter(Benchmark == benchmark) %>% 
+            select(Test) %>% 
+            unique
+        
+        #browser()
+        
+        if (benchmark == "urbanek")
+            # remove tests with almost the same results
+            testnames = testnames %>% filter(row_number() %in% c(4, 5, 7, 8, 9, 10, 15))
+        
+        
+        for (i in 1:nrow(testnames)) 
+        {
+            test = as.character(testnames[i, "Test"])
+
+            data.to.plot = benchmark.results %>% 
+                filter(Host == host & Benchmark == benchmark &
+                       Test == test)
+            
+            data.to.plot$Library = factor(data.to.plot$Library,
+                levels=rev(levels(data.to.plot$Library)))
+            
+            image.path = file.path(IMAGES.DIR,
+               paste0("img_ph", 
+                      "_h", which(host == hosts.info$Host),
+                      "_b", which(benchmark == BENCHMARKS),
+                      "_t", i,
+                      ".png"))
+            
+            png(image.path, width=500, height=50*nrow(data.to.plot))
+                print(ggplot(data.to.plot, aes(x=Library, y=Time)) +
+                    theme_classic() + 
+                    theme(
+                        panel.border = element_blank()
+                    ) +
+                    scale_y_continuous(expand = c(0, 0), 
+                        limits = c(0, 1.12*max(data.to.plot$Time))) +
+                    ggtitle(test) + 
+                    ylab("Seconds (performance gain)") +
+                    geom_bar(stat="identity", width=.75) + 
+                    geom_text(aes(label=round(Time, 2)), hjust=-0.25) +
+                    coord_flip() + 
+                    geom_hline(yintercept = 0) + 
+                    geom_vline(xintercept = 0.39)
+                ) 
+            dev.off()
+            
+            cat(paste0("![](", image.path, ")\n\n"))
+        }
+        
+        
+    }
+}
+
+```
