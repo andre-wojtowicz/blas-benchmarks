@@ -148,17 +148,12 @@ for (host in hosts.info$Host)
     
     for (benchmark in BENCHMARKS)
     {
-        if (benchmark == "gcbd")
-            next
-        
         cat(paste0("## ", paste(toupper(substring(benchmark, 1,1)), substring(benchmark, 2),sep="", collapse=" "), " benchmark\n\n"))
         
         testnames = benchmark.results %>% 
             filter(Benchmark == benchmark) %>% 
             select(Test) %>% 
             unique
-        
-        #browser()
         
         if (benchmark == "urbanek")
             # remove tests with almost the same results
@@ -173,10 +168,11 @@ for (host in hosts.info$Host)
                 filter(Host == host & Benchmark == benchmark &
                        Test == test)
             
-            data.to.plot = data.to.plot %>% 
-                mutate(PerfGain=data.to.plot[which(data.to.plot$Library==LIBRARY.REF), "Time"]/Time)
+            if (benchmark != "gcbd")
+                data.to.plot = data.to.plot %>% 
+                    mutate(PerfGain=data.to.plot[which(data.to.plot$Library==LIBRARY.REF), "Time"]/Time)
             
-            levels(data.to.plot$Library) = list(
+            renamedLibs = list(
                 "cuBLAS"="cublas",
                 "BLIS"="blis",
                 "MKL"="mkl",
@@ -185,6 +181,12 @@ for (host in hosts.info$Host)
                 "GotoBLAS2"="gotoblas2",
                 "ATLAS (st)"="atlas_st",
                 "Netlib"="netlib")
+            
+            if (benchmark != "gcbd")
+                levels(data.to.plot$Library) = renamedLibs
+            else
+                levels(data.to.plot$Library) = rev(renamedLibs)
+            
             
             data.to.plot = data.to.plot %>% 
                 mutate(Color=sapply(Library, function(x){
@@ -201,13 +203,18 @@ for (host in hosts.info$Host)
                       ".png"))
             
             cat(paste0("#### ", gsub(" \\(.*\\)", "", test)), "\n\n")
-            cat(paste("Time in seconds -", data.to.plot$Runs[1], 
-                      "runs - lower is better\n\n"))
+            cat(paste0("Time in seconds ", ifelse(benchmark=="gcbd", "regarding matrix size - right panel on log scale", ""), " - ", ifelse(benchmark!="gcbd", data.to.plot$Runs[1], paste(" from ", max(data.to.plot$Runs), " to ", min(data.to.plot$Runs))), 
+                      " runs - lower is better\n\n"))
             
             myColors = c("#E6191A", "#F25F1E", "#636363", "#5AAC45")
             names(myColors) = levels(data.to.plot$Color)
             colScale = scale_fill_manual(name = "Color", values = myColors)
             
+            #if (benchmark=="gcbd")
+            #    browser()
+            
+            if (benchmark != "gcbd")
+            {
             png(image.path, width=600, height=35*nrow(data.to.plot))
                 print(ggplot(data.to.plot, aes(x=reorder(Library, -Time), y=Time, fill=Color)) +
                     theme_classic() + 
@@ -234,6 +241,78 @@ for (host in hosts.info$Host)
             dev.off()
             
             cat(paste0("![](", image.path, ")\n\n\n\n"))
+            
+            } else {
+            rbColors = c("#F40000","#FF8000","#0094FF","#E900FF","#B35807","#7F00FF","#FFBC70","#00DD0E")
+                
+            png(image.path, width=400, height=350, type="cairo")
+                print(ggplot(data.to.plot, 
+                             aes(x=Size, y=Time, group=Library, color=Library,
+                                 shape=Library, fill=Library)) +
+                    theme_classic() +
+                        theme(
+                            panel.border = element_blank(),
+                            axis.title.x=element_blank(),
+                            axis.title.y=element_blank(),
+                            axis.text.x = element_text(colour="grey60"),
+                            axis.text.y = element_text(colour="grey60"),
+                            axis.ticks.x=element_line(color="grey60"),
+                            axis.ticks.y=element_line(color="grey60"),
+                            legend.margin=unit(c(-13,8), "mm"),
+                            legend.title=element_blank()
+                        ) +
+                    geom_line(size=1) + 
+                    geom_point(size=2, color="grey30") +
+                    scale_x_continuous(expand = c(0, 0), 
+                                       limits = c(0, 5000)) +
+                    scale_y_continuous(expand = c(0, 0)) +
+                    coord_cartesian(ylim=c(0, max(20, max(data.to.plot$Time)/3))) +
+                    geom_hline(yintercept = 0, color="grey") + 
+                    geom_vline(xintercept = 0.4, color="grey") +
+                    scale_shape_manual(values=c(21,24,22,25,23,21,22,23)) +
+                    scale_color_manual(values=rbColors) +
+                    scale_fill_manual(values=rbColors)
+                    
+                )
+            dev.off()
+            
+            cat(paste0("![](", image.path, ")"))
+            
+            png(gsub(".png", "b.png", image.path), width=350, height=350, type="cairo")
+                print(ggplot(data.to.plot, 
+                       aes(x=Size, y=Time, group=Library, color=Library,
+                           shape=Library, fill=Library)) +
+                    theme_classic() +
+                    theme(
+                        panel.border = element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank(),
+                        axis.text.x = element_text(colour="grey60"),
+                        axis.text.y = element_text(colour="grey60"),
+                        axis.ticks.x=element_line(color="grey60"),
+                        axis.ticks.y=element_line(color="grey60"),
+                        legend.position="none"
+                    ) +
+                    geom_line(size=1) + 
+                    geom_point(size=2, color="grey30") +
+                    scale_x_log10(expand=c(0,0), 
+                                  breaks=c(100, 200, 400, 800, 1600, 3200, 5000),
+                                  limits=c(100, 5500)) +
+                    scale_y_log10() +
+                    scale_shape_manual(values=c(21,24,22,25,23,21,22,23)) +
+                    geom_hline(yintercept = 0, color="grey") +
+                    geom_vline(xintercept = min(data.to.plot$Size), color="grey") +
+                    scale_color_manual(values=rbColors) +
+                    scale_fill_manual(values=rbColors)
+                    
+                )
+            dev.off()
+            
+            cat(paste0("![](", gsub(".png", "b.png", image.path), ")\n\n\n\n"))
+            
+            }
+            
+            
         }
         
         
