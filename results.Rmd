@@ -11,6 +11,7 @@ checkpoint("2016-04-01", scanForPackages=FALSE, verbose=FALSE)
 library(reshape2)
 library(dplyr)
 library(ggplot2)
+library(RColorBrewer)
 ```
 
 ```{r config, echo=FALSE}
@@ -185,6 +186,13 @@ for (host in hosts.info$Host)
                 "ATLAS (st)"="atlas_st",
                 "Netlib"="netlib")
             
+            data.to.plot = data.to.plot %>% 
+                mutate(Color=sapply(Library, function(x){
+                    if(x=="Netlib") "A" 
+                    else if(x=="ATLAS (st)") "B" 
+                    else if(x=="cuBLAS") "D" 
+                    else "C"}))
+            
             image.path = file.path(IMAGES.DIR,
                paste0("img_ph", 
                       "_h", which(host == hosts.info$Host),
@@ -193,10 +201,15 @@ for (host in hosts.info$Host)
                       ".png"))
             
             cat(paste0("#### ", gsub(" \\(.*\\)", "", test)), "\n\n")
-            cat("Time in seconds - lower is better\n\n")
+            cat(paste("Time in seconds -", data.to.plot$Runs[1], 
+                      "runs - lower is better\n\n"))
             
-            png(image.path, width=600, height=50*nrow(data.to.plot))
-                print(ggplot(data.to.plot, aes(x=Library, y=Time)) +
+            myColors = c("#E6191A", "#F25F1E", "#636363", "#5AAC45")
+            names(myColors) = levels(data.to.plot$Color)
+            colScale = scale_fill_manual(name = "Color", values = myColors)
+            
+            png(image.path, width=600, height=35*nrow(data.to.plot))
+                print(ggplot(data.to.plot, aes(x=reorder(Library, -Time), y=Time, fill=Color)) +
                     theme_classic() + 
                     theme(
                         panel.border = element_blank(),
@@ -204,17 +217,19 @@ for (host in hosts.info$Host)
                         axis.title.y=element_blank(),
                         axis.text.x = element_text(colour="grey60"),
                         axis.ticks.x=element_line(color="grey60"),
-                        axis.ticks.y=element_line(color="grey60")
+                        axis.ticks.y=element_line(color="grey60"),
+                        legend.position="none"
                     ) +
                     scale_y_continuous(expand = c(0, 0), 
                                        limits = c(0, 1.20*max(data.to.plot$Time))) +
-                    geom_bar(stat="identity", width=.75) + 
+                    geom_bar(stat="identity", width=.7) + 
                     coord_flip() + 
-                    geom_text(aes(y=Time, x=Library, label=as.character(round(Time, 2))), hjust=-0.25, size=3, colour="grey45") +
-                    geom_text(aes(y=1.15*max(data.to.plot$Time), x=Library, label=paste0("x", round(PerfGain, 1))), hjust=1, size=4) +
+                    geom_text(aes(y=Time, x=Library, label=format(Time, digits=2, nsmall=2)), hjust=-0.25, size=3, colour="grey45") +
+                    geom_text(aes(y=1.2*max(data.to.plot$Time), x=Library, label=paste0("x", trimws(format(PerfGain, digits=1, nsmall=1)))), hjust=1, size=4) +
                     geom_hline(yintercept = 0, color="grey") + 
                     geom_vline(xintercept = 0.4, color="grey") +
-                    annotate("text", x=nrow(data.to.plot)/2, y=1.19*max(data.to.plot$Time), label="Performance gain", angle=-90, hjust=0.6)
+                    annotate("text", x=nrow(data.to.plot)+0.55, y=1.2*max(data.to.plot$Time), label="Performance gain", hjust=1) +
+                    colScale
                 ) 
             dev.off()
             
