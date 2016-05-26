@@ -1,9 +1,12 @@
 ---
-title: "Results"
+title: "BLAS libraries benchmarks"
 author: "Andrzej Wójtowicz"
-output: html_document
+output: 
+    html_document:
+        keep_md: yes
 ---
 
+Document generation date: `r Sys.time()`
 
 ```{r checkpoint, echo=FALSE, warning=FALSE, message=FALSE}
 library(checkpoint)
@@ -13,6 +16,50 @@ library(dplyr)
 library(ggplot2)
 library(RColorBrewer)
 ```
+
+## Table of Contents
+
+ 1. [Configuration](#configuration)
+ 2. [Results per host](#results-per-host)
+    * [Intel Core i5-4590 + NVIDIA GeForce GT 430](#intel-core-i5-4590-nvidia-geforce-gt-430)
+    * [Intel Core i5-3570](#intel-core-i5-3570)
+    * [Intel Core i3-2120](#intel-core-i3-2120)
+    * [Intel Core i3-3120M](#intel-core-i3-3120m)
+ 3. [Results per library](#results-per-library)
+    * [Netlib](#netlib)
+    * [Atlas (st)](#atlas-st)
+    * [OpenBLAS](#openblas)
+    * [Atlas (mt)](#atlas-mt)
+    * [GotoBLAS2](#gotoblas2)
+    * [MKL](#mkl)
+    * [BLIS](#blis)
+ 
+***
+
+## Configuration
+
+**R software**: [Microsoft R Open](https://mran.microsoft.com/open/).
+
+**Libraries**:
+
+|CPU (single-threaded)|CPU (multi-threaded)|GPU|
+|---|---|---|
+|[Netlib](http://www.netlib.org/) (debian package)|[OpenBLAS](http://www.openblas.net/) (debian package)|[NVIDIA cuBLAS](https://developer.nvidia.com/cublas) (NVBLAS + Intel MKL)|
+|[ATLAS](http://math-atlas.sourceforge.net/) (debian package)|[ATLAS](http://math-atlas.sourceforge.net/) (dev branch)|   |
+|   |[GotoBLAS2](https://prs.ism.ac.jp/~nakama/SurviveGotoBLAS2/) (Survive fork)|   |
+|   |[Intel MKL](https://mran.microsoft.com/download/) (part of Microsoft R Open)|   |
+|   |[BLIS](https://github.com/flame/blis)|   |
+
+**Hosts**:
+
+|No.|CPU|GPU|
+|---|---|---|
+|1.|[Intel Core i5-4590](http://ark.intel.com/products/80815/Intel-Core-i5-4590-Processor-6M-Cache-up-to-3_70-GHz)|[NVIDIA GeForce GT 430](http://www.geforce.com/hardware/desktop-gpus/geforce-gt-430/specifications)|
+|2.|[Intel Core i5-3570](http://ark.intel.com/products/65702/Intel-Core-i5-3570-Processor-6M-Cache-up-to-3_80-GHz)| - |
+|3.|[Intel Core i3-2120](http://ark.intel.com/products/53426/Intel-Core-i3-2120-Processor-3M-Cache-3_30-GHz)| - |
+|4.|[Intel Core i3-3120M](http://ark.intel.com/products/71465/Intel-Core-i3-3120M-Processor-3M-Cache-2_50-GHz)| - |
+
+**Benchmarks**: [Urbanek](http://r.research.att.com/benchmarks/R-benchmark-25.R), [Revolution](https://gist.github.com/andrie/24c9672f1ea39af89c66#file-rro-mkl-benchmark-r), [Gcbd](https://cran.r-project.org/web/packages/gcbd/vignettes/gcbd.pdf).
 
 ```{r config, echo=FALSE}
 
@@ -32,6 +79,8 @@ LIBRARIES = c("netlib",
               "cublas")
 
 LIBRARY.REF = "netlib"
+HOST.REF = "Intel Core i3-3120M"
+HOST.REF.GPU = "NVIDIA GeForce GT 430"
 
 HOST.INFO.PATTERN = "host-info-<HOST>.log"
 BENCHMKAR.PATTERN = "test-<BENCHMARK>-<HOST>-<LIBRARY>.rds"
@@ -132,7 +181,7 @@ saveRDS(benchmark.results, file.path(DATA.DIR, "benchmark.results.rds"))
 
 ```{r per-host, echo=FALSE, results='asis'}
 
-cat("# Per host\n\n")
+cat("# Results per host\n\n")
 
 for (host in hosts.info$Host)
 {
@@ -148,7 +197,7 @@ for (host in hosts.info$Host)
     
     for (benchmark in BENCHMARKS)
     {
-        cat(paste0("## ", paste(toupper(substring(benchmark, 1,1)), substring(benchmark, 2),sep="", collapse=" "), " benchmark\n\n"))
+        cat(paste0("### ", paste(toupper(substring(benchmark, 1,1)), substring(benchmark, 2),sep="", collapse=" "), " benchmark\n\n"))
         
         testnames = benchmark.results %>% 
             filter(Benchmark == benchmark) %>% 
@@ -209,9 +258,6 @@ for (host in hosts.info$Host)
             myColors = c("#E6191A", "#F25F1E", "#636363", "#5AAC45")
             names(myColors) = levels(data.to.plot$Color)
             colScale = scale_fill_manual(name = "Color", values = myColors)
-            
-            #if (benchmark=="gcbd")
-            #    browser()
             
             if (benchmark != "gcbd")
             {
@@ -320,3 +366,187 @@ for (host in hosts.info$Host)
 }
 
 ```
+
+
+
+
+```{r per-library, echo=FALSE, results='asis'}
+
+cat("# Results per library\n\n")
+
+renamedLibs = list(
+    "cublas"="cuBLAS",
+    "blis"="BLIS",
+    "mkl"="MKL",
+    "atlas_mt"="ATLAS (mt)",
+    "openblas"="OpenBLAS",
+    "gotoblas2"="GotoBLAS2",
+    "atlas_st"="ATLAS (st)",
+    "netlib"="Netlib")
+
+for (lib in LIBRARIES)
+{
+    cat(paste("##", renamedLibs[[lib]]))
+    
+    cat("\n\n\n\n")
+    
+    for (benchmark in BENCHMARKS)
+    {
+        cat(paste0("### ", paste(toupper(substring(benchmark, 1,1)), substring(benchmark, 2),sep="", collapse=" "), " benchmark\n\n"))
+        
+        testnames = benchmark.results %>% 
+            filter(Benchmark == benchmark) %>% 
+            select(Test) %>% 
+            unique
+        
+        if (benchmark == "urbanek")
+            # remove tests with almost the same results
+            testnames = testnames %>% filter(row_number() %in% c(4, 5, 7, 8, 9, 10, 15))
+        
+        
+        for (i in 1:nrow(testnames)) 
+        {
+            test = as.character(testnames[i, "Test"])
+
+            data.to.plot = benchmark.results %>% 
+                filter(Library == lib & Benchmark == benchmark &
+                       Test == test)
+            
+            if (benchmark != "gcbd")
+            {
+                if (lib!="cublas") 
+                    data.to.plot = data.to.plot %>%
+                      mutate(PerfGain=data.to.plot[which(hosts.info$CPU==HOST.REF), "Time"]/Time)
+                else
+                    data.to.plot = data.to.plot %>%
+                      mutate(PerfGain=data.to.plot[which(hosts.info$GPU==HOST.REF.GPU), "Time"]/Time)
+            }
+            
+            
+            data.to.plot = data.to.plot %>% rowwise() %>%
+                mutate(CPUGPU=hosts.info[which(hosts.info$Host==Host), ifelse(lib!="cublas", "CPU", "GPU")])
+            
+            image.path = file.path(IMAGES.DIR,
+               paste0("img_pl", 
+                      "_l", which(lib == LIBRARIES),
+                      "_b", which(benchmark == BENCHMARKS),
+                      "_t", i,
+                      ".png"))
+            
+            cat(paste0("#### ", gsub(" \\(.*\\)", "", test)), "\n\n")
+            cat(paste0("Time in seconds ", ifelse(benchmark=="gcbd", "regarding matrix size - right panel on log scale", ""), " - ", ifelse(benchmark!="gcbd", data.to.plot$Runs[1], paste(" from ", max(data.to.plot$Runs), " to ", min(data.to.plot$Runs))), 
+                      " runs - lower is better\n\n"))
+            
+            
+            myColors = c("#5AAC45", "#636363", "#636363", "#E6191A")
+            colScale = scale_fill_manual(name = "Color", values = myColors)
+            
+            if (benchmark != "gcbd")
+            {
+            png(image.path, width=600, height=50*nrow(data.to.plot)+ifelse(nrow(data.to.plot)>1, 0, 20))
+                print(ggplot(data.to.plot, aes(x=reorder(CPUGPU, -Time), y=Time,
+                                               fill=CPUGPU)) +
+                    theme_classic() + 
+                    theme(
+                        panel.border = element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank(),
+                        axis.text.x = element_text(colour="grey60"),
+                        axis.ticks.x=element_line(color="grey60"),
+                        axis.ticks.y=element_line(color="grey60"),
+                        legend.position="none"
+                    ) +
+                    scale_y_continuous(expand = c(0, 0), 
+                                       limits = c(0, 1.20*max(data.to.plot$Time))) +
+                    geom_bar(stat="identity", width=.7) + 
+                    coord_flip() + 
+                    geom_text(aes(y=Time, x=CPUGPU, label=format(Time, digits=2, nsmall=2)), hjust=-0.25, size=3, colour="grey45") +
+                    geom_text(aes(y=1.2*max(data.to.plot$Time), x=CPUGPU, label=paste0("x", trimws(format(PerfGain, digits=1, nsmall=1)))), hjust=1, size=4) +
+                    geom_hline(yintercept = 0, color="grey") + 
+                    geom_vline(xintercept = 0.4, color="grey") +
+                    annotate("text", x=nrow(data.to.plot)+ifelse(nrow(data.to.plot)>1, 0.55, 0.45), y=1.2*max(data.to.plot$Time), label="Performance gain", hjust=1) +
+                    colScale
+                ) 
+            dev.off()
+            
+            cat(paste0("![](", image.path, ")\n\n\n\n"))
+            
+            } else {
+                
+            rbColors = c("#F40000","#FF8000","#0094FF","#7F00FF","#FFBC70","#00DD0E")
+            
+            png(image.path, width=400, height=350, type="cairo")
+                print(ggplot(data.to.plot, 
+                             aes(x=Size, y=Time, group=CPUGPU, color=CPUGPU,
+                                 shape=CPUGPU, fill=CPUGPU)) +
+                    theme_classic() +
+                        theme(
+                            panel.border = element_blank(),
+                            axis.title.x=element_blank(),
+                            axis.title.y=element_blank(),
+                            axis.text.x = element_text(colour="grey60"),
+                            axis.text.y = element_text(colour="grey60"),
+                            axis.ticks.x=element_line(color="grey60"),
+                            axis.ticks.y=element_line(color="grey60"),
+                            legend.margin=unit(c(-13,8), "mm"),
+                            legend.title=element_blank()
+                        ) +
+                    geom_line(size=1) + 
+                    geom_point(size=2, color="grey30") +
+                    scale_x_continuous(expand = c(0, 0), 
+                                       limits = c(0, 5000)) +
+                    scale_y_continuous(expand = c(0, 0)) +
+                    geom_hline(yintercept = 0, color="grey") + 
+                    geom_vline(xintercept = 0.4, color="grey") +
+                    scale_shape_manual(values=c(25,24,22,21)) +
+                    scale_color_manual(values=rbColors) +
+                    scale_fill_manual(values=rbColors)
+                    
+                )
+            dev.off()
+            
+            cat(paste0("![](", image.path, ")"))
+            
+            png(gsub(".png", "b.png", image.path), width=350, height=350, type="cairo")
+                print(ggplot(data.to.plot, 
+                       aes(x=Size, y=Time, group=CPUGPU, color=CPUGPU,
+                           shape=CPUGPU, fill=CPUGPU)) +
+                    theme_classic() +
+                    theme(
+                        panel.border = element_blank(),
+                        axis.title.x=element_blank(),
+                        axis.title.y=element_blank(),
+                        axis.text.x = element_text(colour="grey60"),
+                        axis.text.y = element_text(colour="grey60"),
+                        axis.ticks.x=element_line(color="grey60"),
+                        axis.ticks.y=element_line(color="grey60"),
+                        legend.position="none"
+                    ) +
+                    geom_line(size=1) + 
+                    geom_point(size=2, color="grey30") +
+                    scale_x_log10(expand=c(0,0), 
+                                  breaks=c(100, 200, 400, 800, 1600, 3200, 5000),
+                                  limits=c(100, 5500)) +
+                    scale_y_log10() +
+                    scale_shape_manual(values=c(25,24,22,21)) +
+                    geom_hline(yintercept = 0, color="grey") +
+                    geom_vline(xintercept = min(data.to.plot$Size), color="grey") +
+                    scale_color_manual(values=rbColors) +
+                    scale_fill_manual(values=rbColors)
+                    
+                )
+            dev.off()
+            
+            cat(paste0("![](", gsub(".png", "b.png", image.path), ")\n\n\n\n"))
+            
+            }
+            
+            
+        }
+        
+        
+    }
+}
+
+```
+
