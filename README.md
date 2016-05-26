@@ -9,7 +9,7 @@ Document generation date: 2016-05-26 19:23:05
 
  1. [Configuration](#configuration)
  2. [Results per host](#results-per-host)
-    * [Intel Core i5-4590 + NVIDIA GeForce GT 430](#intel-core-i5-4590-nvidia-geforce-gt-430)
+    * [Intel Core i5-4590 + NVIDIA GeForce GT 430](#intel-core-i5-4590--nvidia-geforce-gt-430)
     * [Intel Core i5-3570](#intel-core-i5-3570)
     * [Intel Core i3-2120](#intel-core-i3-2120)
     * [Intel Core i3-3120M](#intel-core-i3-3120m)
