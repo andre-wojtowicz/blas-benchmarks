@@ -320,7 +320,7 @@ function gotoblas2_check {
     echo "${DIR_GOTOBLAS2}" > /etc/ld.so.conf.d/gotoblas2.conf
     ldconfig
     
-    LD_PRELOAD="${DIR_GOTOBLAS2}/libgoto2blas.so ${DIR_GOTOBLAS2}/libgoto2lapack.so" GOTO_NUM_THREADS=${NPROC} Rscript -e "blasLibName='gotoblas2'; library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE); library(RhpcBLASctl); blas_set_num_threads(${NPROC}); source('${R_BENCHMARK_SCRIPT}')"
+    LD_PRELOAD="${DIR_GOTOBLAS2}/libgoto2blas.so ${DIR_GOTOBLAS2}/libgoto2lapack.so" GOTO_NUM_THREADS=1 Rscript -e "blasLibName='gotoblas2'; library(checkpoint); checkpoint('${CHECKPOINT_DATE}', scanForPackages=FALSE, verbose=FALSE); library(RhpcBLASctl); blas_set_num_threads(${NPROC}); source('${R_BENCHMARK_SCRIPT}')"
     
     rm /etc/ld.so.conf.d/gotoblas2.conf
     ldconfig
