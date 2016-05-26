@@ -19,5 +19,5 @@ vignettes/*.pdf
 cpuinfo
 hosts-list.txt
 ssh/rsa.key
-*.rds
+results/*.rds
 *.html
