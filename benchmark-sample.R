@@ -1,15 +1,18 @@
-library(rbenchmark)
+runs = 10
 
 f = function()
 {
-set.seed (1)
-m <- 1000
-n <- 500
-A <- matrix (runif (m*n),m,n)
+    set.seed (1)
+    m <- 4000
+    n <- 4000
+    A <- matrix (runif (m*n),m,n)
 
-# Matrix multiply
-B <- crossprod(A)
+    # Matrix multiply
+    B <- crossprod(A)
 }
 
-print(benchmark(f(), replications=100))
-
+cumulate = 0
+for (i in 1:runs)
+    cumulate = cumulate + as.numeric(system.time(f())[3])
+    
+cat(paste0(round(cumulate/runs, 3), "\n"))
