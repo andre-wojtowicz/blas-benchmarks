@@ -11,5 +11,5 @@ A <- matrix (runif (m*n),m,n)
 B <- crossprod(A)
 }
 
-benchmark(f(), replications=100)
+print(benchmark(f(), replications=100))
 
