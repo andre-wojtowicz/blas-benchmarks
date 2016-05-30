@@ -546,6 +546,58 @@ function cublas_install {
     echo "Finished installing cuBLAS"
 }
 
+function cublas_optimize {
+
+    if [ $(nvidia-detect | grep -c "No NVIDIA GPU detected.") -eq 1 ]; then
+        echo "No NVIDIA GPU detected, cuBLAS installation aborted"
+        return 1
+    fi
+
+    echo "Started optimizing cuBLAS"
+
+    dims_arr=(128 256 512 1024 2048 4096)
+
+    best_dim_val=-1
+    best_dim_time=-1
+
+    for dim in ${dims_arr[*]}
+    do
+        echo -n "$dim - "
+        echo "
+        NVBLAS_LOGFILE       /dev/null
+        NVBLAS_CPU_BLAS_LIB  ${DIR_MKL}/libRblas.so
+        NVBLAS_GPU_LIST      ALL0
+        NVBLAS_TILE_DIM      $dim
+        #NVBLAS_AUTOPIN_MEM_ENABLED" > ${DIR_CUBLAS}/nvblas.conf
+
+        cu_out=$(cublas_check | tail -2 | head -1)
+
+        echo $cu_out
+
+        if [ $best_dim_val -eq -1 ]; then
+           echo "first"
+           best_dim_val=$dim
+           best_dim_time=$cu_out
+        elif [ $(echo "$cu_out < $best_dim_time" | bc) -eq 1 ] ; then
+           echo "better"
+           best_dim_time=$cu_out
+           best_dim_val=$dim
+        fi
+    done
+
+    echo "best: ${best_dim_val} ${best_dim_time}"
+
+    echo "
+    NVBLAS_LOGFILE       /dev/null
+    NVBLAS_CPU_BLAS_LIB  ${DIR_MKL}/libRblas.so
+    NVBLAS_GPU_LIST      ALL0
+    NVBLAS_TILE_DIM      $best_dim_val
+    #NVBLAS_AUTOPIN_MEM_ENABLED" > ${DIR_CUBLAS}/nvblas.conf
+
+    echo "Finished optimizing cuBLAS"
+
+}
+
 # CUDA 7.5 currently supports linux kernel 3.x
 #
 #function cublas_online_install {

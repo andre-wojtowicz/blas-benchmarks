@@ -3,8 +3,8 @@ runs = 10
 f = function()
 {
     set.seed (1)
-    m <- 4000
-    n <- 4000
+    m <- 3500
+    n <- 3500
     A <- matrix (runif (m*n),m,n)
 
     # Matrix multiply
