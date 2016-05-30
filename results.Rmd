@@ -22,6 +22,7 @@ library(RColorBrewer)
  1. [Configuration](#configuration)
  2. [Results per host](#results-per-host)
     * [Intel Core i5-4590 + NVIDIA GeForce GT 430](#intel-core-i5-4590--nvidia-geforce-gt-430)
+    * [Intel Core i5-4590 + NVIDIA GeForce GTX 750 Ti](#intel-core-i5-4590--nvidia-geforce-gtx-750-ti)
     * [Intel Core i5-3570](#intel-core-i5-3570)
     * [Intel Core i3-2120](#intel-core-i3-2120)
     * [Intel Core i3-3120M](#intel-core-i3-3120m)
@@ -40,27 +41,28 @@ library(RColorBrewer)
 
 ## Configuration
 
-**R software**: [Microsoft R Open](https://mran.microsoft.com/open/).
+**R software**: [Microsoft R Open](https://mran.microsoft.com/open/) (3.2.4).
 
 **Libraries**:
 
 |CPU (single-threaded)|CPU (multi-threaded)|GPU|
 |---|---|---|
-|[Netlib](http://www.netlib.org/) (debian package)|[OpenBLAS](http://www.openblas.net/) (debian package)|[NVIDIA cuBLAS](https://developer.nvidia.com/cublas) (NVBLAS + Intel MKL)|
-|[ATLAS](http://math-atlas.sourceforge.net/) (debian package)|[ATLAS](http://math-atlas.sourceforge.net/) (dev branch)|   |
-|   |[GotoBLAS2](https://prs.ism.ac.jp/~nakama/SurviveGotoBLAS2/) (Survive fork)|   |
-|   |[Intel MKL](https://mran.microsoft.com/download/) (part of Microsoft R Open)|   |
-|   |[BLIS](https://github.com/flame/blis)|   |
+|[Netlib](http://www.netlib.org/) (debian package, blas 1.2.20110419, lapack 3.5.0)|[OpenBLAS](http://www.openblas.net/) (debian package, 0.2.12)|[NVIDIA cuBLAS](https://developer.nvidia.com/cublas) (NVBLAS 6.5 + Intel MKL)|
+|[ATLAS](http://math-atlas.sourceforge.net/) (debian package, 3.10.2)|[ATLAS](http://math-atlas.sourceforge.net/) (dev branch, 3.11.38)|   |
+|   |[GotoBLAS2](https://prs.ism.ac.jp/~nakama/SurviveGotoBLAS2/) (Survive fork, 3.141)|   |
+|   |[Intel MKL](https://mran.microsoft.com/download/) (part of RevoMath package, 3.2.4)|   |
+|   |[BLIS](https://github.com/flame/blis) (dev branch, 0.2.0+/17.05.2016)|   |
 
 **Hosts**:
 
 |No.|CPU|GPU|
 |---|---|---|
 |1.|[Intel Core i5-4590](http://ark.intel.com/products/80815/Intel-Core-i5-4590-Processor-6M-Cache-up-to-3_70-GHz)|[NVIDIA GeForce GT 430](http://www.geforce.com/hardware/desktop-gpus/geforce-gt-430/specifications)|
-|2.|[Intel Core i5-3570](http://ark.intel.com/products/65702/Intel-Core-i5-3570-Processor-6M-Cache-up-to-3_80-GHz)| - |
-|3.|[Intel Core i3-2120](http://ark.intel.com/products/53426/Intel-Core-i3-2120-Processor-3M-Cache-3_30-GHz)| - |
-|4.|[Intel Core i3-3120M](http://ark.intel.com/products/71465/Intel-Core-i3-3120M-Processor-3M-Cache-2_50-GHz)| - |
-|5.|[Intel Core i5-3317U](http://ark.intel.com/products/65707/Intel-Core-i5-3317U-Processor-3M-Cache-up-to-2_60-GHz)|[NVIDIA GeForce GT 630M](http://www.geforce.com/hardware/notebook-gpus/geforce-gt-630m/specifications)|
+|2.|[Intel Core i5-4590](http://ark.intel.com/products/80815/Intel-Core-i5-4590-Processor-6M-Cache-up-to-3_70-GHz)|[NVIDIA GeForce GTX 750 Ti](http://www.geforce.com/hardware/desktop-gpus/geforce-gtx-750-ti/specifications)|
+|3.|[Intel Core i5-3570](http://ark.intel.com/products/65702/Intel-Core-i5-3570-Processor-6M-Cache-up-to-3_80-GHz)| - |
+|4.|[Intel Core i3-2120](http://ark.intel.com/products/53426/Intel-Core-i3-2120-Processor-3M-Cache-3_30-GHz)| - |
+|5.|[Intel Core i3-3120M](http://ark.intel.com/products/71465/Intel-Core-i3-3120M-Processor-3M-Cache-2_50-GHz)| - |
+|6.|[Intel Core i5-3317U](http://ark.intel.com/products/65707/Intel-Core-i5-3317U-Processor-3M-Cache-up-to-2_60-GHz)|[NVIDIA GeForce GT 630M](http://www.geforce.com/hardware/notebook-gpus/geforce-gt-630m/specifications)|
 
 **Benchmarks**: [Urbanek](http://r.research.att.com/benchmarks/R-benchmark-25.R), [Revolution](https://gist.github.com/andrie/24c9672f1ea39af89c66#file-rro-mkl-benchmark-r), [Gcbd](https://cran.r-project.org/web/packages/gcbd/vignettes/gcbd.pdf).
 
@@ -441,15 +443,17 @@ for (lib in LIBRARIES)
                       " runs - lower is better\n\n"))
             
             
-            myColors = c("#5AAC45", "#636363", "#636363", "#E6191A", "#636363")
+            myColors = c("#5AAC45", "#636363", "#636363", "#E6191A", "#636363", "#636363")
             if (lib=="cublas")
-                myColors = c("#E6191A", "#636363")#, "#636363", "#5AAC45", "#636363")
+                myColors = c("#E6191A", "#5AAC45", "#636363")#, "#636363", "#5AAC45", "#636363")
             
             colScale = scale_fill_manual(name = "Color", values = myColors)
             
+            data.to.plot = unique(select(data.to.plot, -Host))
+            
             if (benchmark != "gcbd")
             {
-            png(image.path, width=600, height=50*nrow(data.to.plot)+ifelse(nrow(data.to.plot)>1, 0, 20))
+            png(image.path, width=600, height=50*length(unique(data.to.plot$CPUGPU))+ifelse(nrow(data.to.plot)>1, 0, 20))
                 print(ggplot(data.to.plot, aes(x=reorder(CPUGPU, -Time), y=Time,
                                                fill=CPUGPU)) +
                     theme_classic() + 
@@ -470,7 +474,7 @@ for (lib in LIBRARIES)
                     geom_text(aes(y=1.2*max(data.to.plot$Time), x=CPUGPU, label=paste0("x", trimws(format(PerfGain, digits=1, nsmall=1)))), hjust=1, size=4) +
                     geom_hline(yintercept = 0, color="grey") + 
                     geom_vline(xintercept = 0.4, color="grey") +
-                    annotate("text", x=nrow(data.to.plot)+ifelse(nrow(data.to.plot)>1, 0.55, 0.45), y=1.2*max(data.to.plot$Time), label="Performance gain", hjust=1) +
+                    annotate("text", x=length(unique(data.to.plot$CPUGPU))+ifelse(nrow(data.to.plot)>1, 0.55, 0.45), y=1.2*max(data.to.plot$Time), label="Performance gain", hjust=1) +
                     colScale
                 ) 
             dev.off()
@@ -504,7 +508,7 @@ for (lib in LIBRARIES)
                     scale_y_continuous(expand = c(0, 0)) +
                     geom_hline(yintercept = 0, color="grey") + 
                     geom_vline(xintercept = 0.4, color="grey") +
-                    scale_shape_manual(values=c(25,24,22,21,23)) +
+                    scale_shape_manual(values=c(25,24,22,21,23,25)) +
                     scale_color_manual(values=rbColors) +
                     scale_fill_manual(values=rbColors)
                     
@@ -534,7 +538,7 @@ for (lib in LIBRARIES)
                                   breaks=c(100, 200, 400, 800, 1600, 3200, 5000),
                                   limits=c(100, 5500)) +
                     scale_y_log10() +
-                    scale_shape_manual(values=c(25,24,22,21,23)) +
+                    scale_shape_manual(values=c(25,24,22,21,23,25)) +
                     geom_hline(yintercept = 0, color="grey") +
                     geom_vline(xintercept = min(data.to.plot$Size), color="grey") +
                     scale_color_manual(values=rbColors) +
