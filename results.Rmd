@@ -9,8 +9,9 @@ output:
 Document generation date: `r Sys.time()`
 
 ```{r checkpoint, echo=FALSE, warning=FALSE, message=FALSE}
-library(checkpoint)
-checkpoint("2016-04-01", scanForPackages=FALSE, verbose=FALSE)
+#(checkpoint)
+#checkpoint("2016-04-01", scanForPackages=FALSE, verbose=FALSE)
+.libPaths("C:\\Users\\Andrzej\\Documents\\.checkpoint\\2016-04-01\\lib\\x86_64-w64-mingw32\\3.2.3")
 library(reshape2)
 library(dplyr)
 library(ggplot2)
@@ -27,6 +28,7 @@ library(RColorBrewer)
     * [Intel Core i3-2120](#intel-core-i3-2120)
     * [Intel Core i3-3120M](#intel-core-i3-3120m)
     * [Intel Core i5-3317U + NVIDIA GeForce GT 630M](#intel-core-i5-3317u--nvidia-geforce-gt-630m)
+    * [Intel Pentium Dual-Core E5300](#intel-pentium-dual-core-e5300)
  3. [Results per library](#results-per-library)
     * [Netlib](#netlib)
     * [Atlas (st)](#atlas-st)
@@ -63,6 +65,7 @@ library(RColorBrewer)
 |4.|[Intel Core i3-2120](http://ark.intel.com/products/53426/Intel-Core-i3-2120-Processor-3M-Cache-3_30-GHz)| - |
 |5.|[Intel Core i3-3120M](http://ark.intel.com/products/71465/Intel-Core-i3-3120M-Processor-3M-Cache-2_50-GHz)| - |
 |6.|[Intel Core i5-3317U](http://ark.intel.com/products/65707/Intel-Core-i5-3317U-Processor-3M-Cache-up-to-2_60-GHz)|[NVIDIA GeForce GT 630M](http://www.geforce.com/hardware/notebook-gpus/geforce-gt-630m/specifications)|
+|7.|[Intel Pentium Dual-Core E5300](http://ark.intel.com/products/35300/Intel-Pentium-Processor-E5300-2M-Cache-2_60-GHz-800-MHz-FSB)| - |
 
 **Benchmarks**: [Urbanek](http://r.research.att.com/benchmarks/R-benchmark-25.R), [Revolution](https://gist.github.com/andrie/24c9672f1ea39af89c66#file-rro-mkl-benchmark-r), [Gcbd](https://cran.r-project.org/web/packages/gcbd/vignettes/gcbd.pdf).
 
@@ -249,6 +252,15 @@ for (host in hosts.info$Host)
                     else if(x=="cuBLAS") "D" 
                     else "C"}))
             
+            cat(paste0("#### ", gsub(" \\(.*\\)", "", test)), "\n\n")
+            
+            if (any(data.to.plot$Time == Inf))
+            {
+                cat(paste(as.character(data.to.plot[which(data.to.plot$Time == Inf), "Library"])), "hangs in this test\n\n")
+            }
+            
+            data.to.plot = data.to.plot[data.to.plot$Time != Inf, ]
+            
             image.path = file.path(IMAGES.DIR,
                paste0("img_ph", 
                       "_h", which(host == hosts.info$Host),
@@ -256,7 +268,7 @@ for (host in hosts.info$Host)
                       "_t", i,
                       ".png"))
             
-            cat(paste0("#### ", gsub(" \\(.*\\)", "", test)), "\n\n")
+            
             cat(paste0("Time in seconds ", ifelse(benchmark=="gcbd", "regarding matrix size - right panel on log scale", ""), " - ", ifelse(benchmark!="gcbd", data.to.plot$Runs[1], paste(" from ", max(data.to.plot$Runs), " to ", min(data.to.plot$Runs))), 
                       " runs - lower is better\n\n"))
             
@@ -431,6 +443,15 @@ for (lib in LIBRARIES)
             data.to.plot = data.to.plot %>% rowwise() %>%
                 mutate(CPUGPU=hosts.info[which(hosts.info$Host==Host), ifelse(lib!="cublas", "CPU", "GPU")])
             
+            cat(paste0("#### ", gsub(" \\(.*\\)", "", test)), "\n\n")
+            
+            if (any(data.to.plot$Time == Inf))
+            {
+                cat(paste(as.character(as.data.frame(data.to.plot)[which(data.to.plot$Time == Inf), "CPUGPU"])), "hangs in this test\n\n")
+            }
+            
+            data.to.plot = data.to.plot[data.to.plot$Time != Inf, ]
+            
             image.path = file.path(IMAGES.DIR,
                paste0("img_pl", 
                       "_l", which(lib == LIBRARIES),
@@ -438,7 +459,6 @@ for (lib in LIBRARIES)
                       "_t", i,
                       ".png"))
             
-            cat(paste0("#### ", gsub(" \\(.*\\)", "", test)), "\n\n")
             cat(paste0("Time in seconds ", ifelse(benchmark=="gcbd", "regarding matrix size - right panel on log scale", ""), " - ", ifelse(benchmark!="gcbd", data.to.plot$Runs[1], paste(" from ", max(data.to.plot$Runs), " to ", min(data.to.plot$Runs))), 
                       " runs - lower is better\n\n"))
             
