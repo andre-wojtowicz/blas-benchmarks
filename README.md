@@ -9,7 +9,7 @@ Document generation date: 2016-06-06 15:01:42
 
  1. [Configuration](#configuration)
  2. [Results per host](#results-per-host)
-     * [Intel Core i7-4790K + MSI GeForce GTX 980 Ti Lightning](#intel-core-i7-4790k--msi-geforce-gtx-980-ti)
+    * [Intel Core i7-4790K + MSI GeForce GTX 980 Ti Lightning](#intel-core-i7-4790k--msi-geforce-gtx-980-ti)
     * [Intel Core i5-4590 + NVIDIA GeForce GT 430](#intel-core-i5-4590--nvidia-geforce-gt-430)
     * [Intel Core i5-4590 + NVIDIA GeForce GTX 750 Ti](#intel-core-i5-4590--nvidia-geforce-gtx-750-ti)
     * [Intel Core i5-3570](#intel-core-i5-3570)
