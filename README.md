@@ -1,7 +1,7 @@
 # BLAS libraries benchmarks
 Andrzej Wójtowicz  
 
-Document generation date: 2016-06-03 15:36:31
+Document generation date: 2016-06-06 15:01:42
 
 
 
@@ -9,6 +9,7 @@ Document generation date: 2016-06-03 15:36:31
 
  1. [Configuration](#configuration)
  2. [Results per host](#results-per-host)
+     * [Intel Core i7-4790K + MSI GeForce GTX 980 Ti Lightning](#intel-core-i7-4790k--msi-geforce-gtx-980-ti)
     * [Intel Core i5-4590 + NVIDIA GeForce GT 430](#intel-core-i5-4590--nvidia-geforce-gt-430)
     * [Intel Core i5-4590 + NVIDIA GeForce GTX 750 Ti](#intel-core-i5-4590--nvidia-geforce-gtx-750-ti)
     * [Intel Core i5-3570](#intel-core-i5-3570)
@@ -30,7 +31,7 @@ Document generation date: 2016-06-03 15:36:31
 
 ## Configuration
 
-**R software**: [Microsoft R Open](https://mran.microsoft.com/open/) (3.2.4).
+**R software**: [Microsoft R Open](https://mran.microsoft.com/open/) (3.2.4)
 
 **Libraries**:
 
@@ -46,15 +47,16 @@ Document generation date: 2016-06-03 15:36:31
 
 |No.|CPU|GPU|
 |---|---|---|
-|1.|[Intel Core i5-4590](http://ark.intel.com/products/80815/Intel-Core-i5-4590-Processor-6M-Cache-up-to-3_70-GHz)|[NVIDIA GeForce GT 430](http://www.geforce.com/hardware/desktop-gpus/geforce-gt-430/specifications)|
-|2.|[Intel Core i5-4590](http://ark.intel.com/products/80815/Intel-Core-i5-4590-Processor-6M-Cache-up-to-3_70-GHz)|[NVIDIA GeForce GTX 750 Ti](http://www.geforce.com/hardware/desktop-gpus/geforce-gtx-750-ti/specifications)|
-|3.|[Intel Core i5-3570](http://ark.intel.com/products/65702/Intel-Core-i5-3570-Processor-6M-Cache-up-to-3_80-GHz)| - |
-|4.|[Intel Core i3-2120](http://ark.intel.com/products/53426/Intel-Core-i3-2120-Processor-3M-Cache-3_30-GHz)| - |
-|5.|[Intel Core i3-3120M](http://ark.intel.com/products/71465/Intel-Core-i3-3120M-Processor-3M-Cache-2_50-GHz)| - |
-|6.|[Intel Core i5-3317U](http://ark.intel.com/products/65707/Intel-Core-i5-3317U-Processor-3M-Cache-up-to-2_60-GHz)|[NVIDIA GeForce GT 630M](http://www.geforce.com/hardware/notebook-gpus/geforce-gt-630m/specifications)|
-|7.|[Intel Pentium Dual-Core E5300](http://ark.intel.com/products/35300/Intel-Pentium-Processor-E5300-2M-Cache-2_60-GHz-800-MHz-FSB)| - |
+|1.|[Intel Core i7-4790K](http://ark.intel.com/products/80807/Intel-Core-i7-4790K-Processor-8M-Cache-up-to-4_40-GHz)|[MSI GeForce GTX 980 Ti Lightning](https://us.msi.com/Graphics-card/GTX-980-Ti-LIGHTNING.html#hero-specification)|
+|2.|[Intel Core i5-4590](http://ark.intel.com/products/80815/Intel-Core-i5-4590-Processor-6M-Cache-up-to-3_70-GHz)|[NVIDIA GeForce GT 430](http://www.geforce.com/hardware/desktop-gpus/geforce-gt-430/specifications)|
+|3.|[Intel Core i5-4590](http://ark.intel.com/products/80815/Intel-Core-i5-4590-Processor-6M-Cache-up-to-3_70-GHz)|[NVIDIA GeForce GTX 750 Ti](http://www.geforce.com/hardware/desktop-gpus/geforce-gtx-750-ti/specifications)|
+|4.|[Intel Core i5-3570](http://ark.intel.com/products/65702/Intel-Core-i5-3570-Processor-6M-Cache-up-to-3_80-GHz)| - |
+|5.|[Intel Core i3-2120](http://ark.intel.com/products/53426/Intel-Core-i3-2120-Processor-3M-Cache-3_30-GHz)| - |
+|6.|[Intel Core i3-3120M](http://ark.intel.com/products/71465/Intel-Core-i3-3120M-Processor-3M-Cache-2_50-GHz)| - |
+|7.|[Intel Core i5-3317U](http://ark.intel.com/products/65707/Intel-Core-i5-3317U-Processor-3M-Cache-up-to-2_60-GHz)|[NVIDIA GeForce GT 630M](http://www.geforce.com/hardware/notebook-gpus/geforce-gt-630m/specifications)|
+|8.|[Intel Pentium Dual-Core E5300](http://ark.intel.com/products/35300/Intel-Pentium-Processor-E5300-2M-Cache-2_60-GHz-800-MHz-FSB)| - |
 
-**Benchmarks**: [Urbanek](http://r.research.att.com/benchmarks/R-benchmark-25.R), [Revolution](https://gist.github.com/andrie/24c9672f1ea39af89c66#file-rro-mkl-benchmark-r), [Gcbd](https://cran.r-project.org/web/packages/gcbd/vignettes/gcbd.pdf).
+**Benchmarks**: [R-benchmark-25](http://r.research.att.com/benchmarks/R-benchmark-25.R), [Revolution](https://gist.github.com/andrie/24c9672f1ea39af89c66#file-rro-mkl-benchmark-r), [Gcbd](https://cran.r-project.org/web/packages/gcbd/vignettes/gcbd.pdf).
 
 
 
@@ -62,11 +64,11 @@ Document generation date: 2016-06-03 15:36:31
 
 # Results per host
 
-## Intel Core i5-4590 + NVIDIA GeForce GT 430
+## Intel Core i7-4790K + MSI GeForce GTX 980 Ti Lightning
 
 
 
-### Urbanek benchmark
+### R-benchmark-25
 
 #### 2800x2800 cross-product matrix 
 
@@ -76,7 +78,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Linear regr. over a 3000x3000 matrix 
+#### Linear regr. over a 2000x2000 matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -84,7 +86,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Eigenvalues of a 640x640 random matrix 
+#### Eigenvalues of a 600x600 random matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -200,11 +202,11 @@ Time in seconds regarding matrix size - right panel on log scale -  from  50  to
 
 
 
-## Intel Core i5-4590 + NVIDIA GeForce GTX 750 Ti
+## Intel Core i5-4590 + NVIDIA GeForce GT 430
 
 
 
-### Urbanek benchmark
+### R-benchmark-25
 
 #### 2800x2800 cross-product matrix 
 
@@ -214,7 +216,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Linear regr. over a 3000x3000 matrix 
+#### Linear regr. over a 2000x2000 matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -222,7 +224,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Eigenvalues of a 640x640 random matrix 
+#### Eigenvalues of a 600x600 random matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -338,11 +340,11 @@ Time in seconds regarding matrix size - right panel on log scale -  from  50  to
 
 
 
-## Intel Core i5-3570
+## Intel Core i5-4590 + NVIDIA GeForce GTX 750 Ti
 
 
 
-### Urbanek benchmark
+### R-benchmark-25
 
 #### 2800x2800 cross-product matrix 
 
@@ -352,7 +354,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Linear regr. over a 3000x3000 matrix 
+#### Linear regr. over a 2000x2000 matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -360,7 +362,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Eigenvalues of a 640x640 random matrix 
+#### Eigenvalues of a 600x600 random matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -476,11 +478,11 @@ Time in seconds regarding matrix size - right panel on log scale -  from  50  to
 
 
 
-## Intel Core i3-2120
+## Intel Core i5-3570
 
 
 
-### Urbanek benchmark
+### R-benchmark-25
 
 #### 2800x2800 cross-product matrix 
 
@@ -490,7 +492,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Linear regr. over a 3000x3000 matrix 
+#### Linear regr. over a 2000x2000 matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -498,7 +500,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Eigenvalues of a 640x640 random matrix 
+#### Eigenvalues of a 600x600 random matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -614,11 +616,11 @@ Time in seconds regarding matrix size - right panel on log scale -  from  50  to
 
 
 
-## Intel Core i3-3120M
+## Intel Core i3-2120
 
 
 
-### Urbanek benchmark
+### R-benchmark-25
 
 #### 2800x2800 cross-product matrix 
 
@@ -628,7 +630,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Linear regr. over a 3000x3000 matrix 
+#### Linear regr. over a 2000x2000 matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -636,7 +638,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Eigenvalues of a 640x640 random matrix 
+#### Eigenvalues of a 600x600 random matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -752,11 +754,11 @@ Time in seconds regarding matrix size - right panel on log scale -  from  50  to
 
 
 
-## Intel Core i5-3317U + NVIDIA GeForce GT 630M
+## Intel Core i3-3120M
 
 
 
-### Urbanek benchmark
+### R-benchmark-25
 
 #### 2800x2800 cross-product matrix 
 
@@ -766,7 +768,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Linear regr. over a 3000x3000 matrix 
+#### Linear regr. over a 2000x2000 matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -774,7 +776,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Eigenvalues of a 640x640 random matrix 
+#### Eigenvalues of a 600x600 random matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -890,11 +892,11 @@ Time in seconds regarding matrix size - right panel on log scale -  from  50  to
 
 
 
-## Intel Pentium Dual-Core E5300
+## Intel Core i5-3317U + NVIDIA GeForce GT 630M
 
 
 
-### Urbanek benchmark
+### R-benchmark-25
 
 #### 2800x2800 cross-product matrix 
 
@@ -904,7 +906,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Linear regr. over a 3000x3000 matrix 
+#### Linear regr. over a 2000x2000 matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -912,9 +914,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Eigenvalues of a 640x640 random matrix 
-
-BLIS hangs in this test
+#### Eigenvalues of a 600x600 random matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -1030,6 +1030,146 @@ Time in seconds regarding matrix size - right panel on log scale -  from  50  to
 
 
 
+## Intel Pentium Dual-Core E5300
+
+
+
+### R-benchmark-25
+
+#### 2800x2800 cross-product matrix 
+
+Time in seconds  - 10 runs - lower is better
+
+![](gen/img/img_ph_h8_b1_t1.png)
+
+
+
+#### Linear regr. over a 2000x2000 matrix 
+
+Time in seconds  - 10 runs - lower is better
+
+![](gen/img/img_ph_h8_b1_t2.png)
+
+
+
+#### Eigenvalues of a 600x600 random matrix 
+
+BLIS hangs in this test
+
+Time in seconds  - 10 runs - lower is better
+
+![](gen/img/img_ph_h8_b1_t3.png)
+
+
+
+#### Determinant of a 2500x2500 random matrix 
+
+Time in seconds  - 10 runs - lower is better
+
+![](gen/img/img_ph_h8_b1_t4.png)
+
+
+
+#### Cholesky decomposition of a 3000x3000 matrix 
+
+Time in seconds  - 10 runs - lower is better
+
+![](gen/img/img_ph_h8_b1_t5.png)
+
+
+
+#### Inverse of a 1600x1600 random matrix 
+
+Time in seconds  - 10 runs - lower is better
+
+![](gen/img/img_ph_h8_b1_t6.png)
+
+
+
+#### Escoufier's method on a 45x45 matrix 
+
+Time in seconds  - 10 runs - lower is better
+
+![](gen/img/img_ph_h8_b1_t7.png)
+
+
+
+### Revolution benchmark
+
+#### Matrix Multiply 
+
+Time in seconds  - 10 runs - lower is better
+
+![](gen/img/img_ph_h8_b2_t1.png)
+
+
+
+#### Cholesky Factorization 
+
+Time in seconds  - 10 runs - lower is better
+
+![](gen/img/img_ph_h8_b2_t2.png)
+
+
+
+#### Singular Value Deomposition 
+
+Time in seconds  - 10 runs - lower is better
+
+![](gen/img/img_ph_h8_b2_t3.png)
+
+
+
+#### Principal Components Analysis 
+
+Time in seconds  - 10 runs - lower is better
+
+![](gen/img/img_ph_h8_b2_t4.png)
+
+
+
+#### Linear Discriminant Analysis 
+
+Time in seconds  - 10 runs - lower is better
+
+![](gen/img/img_ph_h8_b2_t5.png)
+
+
+
+### Gcbd benchmark
+
+#### Matrix Multiply 
+
+Time in seconds regarding matrix size - right panel on log scale -  from  50  to  5 runs - lower is better
+
+![](gen/img/img_ph_h8_b3_t1.png)![](gen/img/img_ph_h8_b3_t1b.png)
+
+
+
+#### QR Decomposition 
+
+Time in seconds regarding matrix size - right panel on log scale -  from  50  to  5 runs - lower is better
+
+![](gen/img/img_ph_h8_b3_t2.png)![](gen/img/img_ph_h8_b3_t2b.png)
+
+
+
+#### Singular Value Deomposition 
+
+Time in seconds regarding matrix size - right panel on log scale -  from  50  to  5 runs - lower is better
+
+![](gen/img/img_ph_h8_b3_t3.png)![](gen/img/img_ph_h8_b3_t3b.png)
+
+
+
+#### Triangular Decomposition 
+
+Time in seconds regarding matrix size - right panel on log scale -  from  50  to  5 runs - lower is better
+
+![](gen/img/img_ph_h8_b3_t4.png)![](gen/img/img_ph_h8_b3_t4b.png)
+
+
+
 
 # Results per library
 
@@ -1037,7 +1177,7 @@ Time in seconds regarding matrix size - right panel on log scale -  from  50  to
 
 
 
-### Urbanek benchmark
+### R-benchmark-25
 
 #### 2800x2800 cross-product matrix 
 
@@ -1047,7 +1187,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Linear regr. over a 3000x3000 matrix 
+#### Linear regr. over a 2000x2000 matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -1055,7 +1195,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Eigenvalues of a 640x640 random matrix 
+#### Eigenvalues of a 600x600 random matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -1175,7 +1315,7 @@ Time in seconds regarding matrix size - right panel on log scale -  from  50  to
 
 
 
-### Urbanek benchmark
+### R-benchmark-25
 
 #### 2800x2800 cross-product matrix 
 
@@ -1185,7 +1325,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Linear regr. over a 3000x3000 matrix 
+#### Linear regr. over a 2000x2000 matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -1193,7 +1333,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Eigenvalues of a 640x640 random matrix 
+#### Eigenvalues of a 600x600 random matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -1313,7 +1453,7 @@ Time in seconds regarding matrix size - right panel on log scale -  from  50  to
 
 
 
-### Urbanek benchmark
+### R-benchmark-25
 
 #### 2800x2800 cross-product matrix 
 
@@ -1323,7 +1463,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Linear regr. over a 3000x3000 matrix 
+#### Linear regr. over a 2000x2000 matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -1331,7 +1471,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Eigenvalues of a 640x640 random matrix 
+#### Eigenvalues of a 600x600 random matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -1451,7 +1591,7 @@ Time in seconds regarding matrix size - right panel on log scale -  from  50  to
 
 
 
-### Urbanek benchmark
+### R-benchmark-25
 
 #### 2800x2800 cross-product matrix 
 
@@ -1461,7 +1601,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Linear regr. over a 3000x3000 matrix 
+#### Linear regr. over a 2000x2000 matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -1469,7 +1609,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Eigenvalues of a 640x640 random matrix 
+#### Eigenvalues of a 600x600 random matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -1589,7 +1729,7 @@ Time in seconds regarding matrix size - right panel on log scale -  from  50  to
 
 
 
-### Urbanek benchmark
+### R-benchmark-25
 
 #### 2800x2800 cross-product matrix 
 
@@ -1599,7 +1739,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Linear regr. over a 3000x3000 matrix 
+#### Linear regr. over a 2000x2000 matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -1607,7 +1747,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Eigenvalues of a 640x640 random matrix 
+#### Eigenvalues of a 600x600 random matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -1727,7 +1867,7 @@ Time in seconds regarding matrix size - right panel on log scale -  from  50  to
 
 
 
-### Urbanek benchmark
+### R-benchmark-25
 
 #### 2800x2800 cross-product matrix 
 
@@ -1737,7 +1877,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Linear regr. over a 3000x3000 matrix 
+#### Linear regr. over a 2000x2000 matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -1745,7 +1885,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Eigenvalues of a 640x640 random matrix 
+#### Eigenvalues of a 600x600 random matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -1865,7 +2005,7 @@ Time in seconds regarding matrix size - right panel on log scale -  from  50  to
 
 
 
-### Urbanek benchmark
+### R-benchmark-25
 
 #### 2800x2800 cross-product matrix 
 
@@ -1875,7 +2015,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Linear regr. over a 3000x3000 matrix 
+#### Linear regr. over a 2000x2000 matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -1883,7 +2023,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Eigenvalues of a 640x640 random matrix 
+#### Eigenvalues of a 600x600 random matrix 
 
 Intel Pentium Dual-Core E5300 hangs in this test
 
@@ -2005,7 +2145,7 @@ Time in seconds regarding matrix size - right panel on log scale -  from  50  to
 
 
 
-### Urbanek benchmark
+### R-benchmark-25
 
 #### 2800x2800 cross-product matrix 
 
@@ -2015,7 +2155,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Linear regr. over a 3000x3000 matrix 
+#### Linear regr. over a 2000x2000 matrix 
 
 Time in seconds  - 10 runs - lower is better
 
@@ -2023,7 +2163,7 @@ Time in seconds  - 10 runs - lower is better
 
 
 
-#### Eigenvalues of a 640x640 random matrix 
+#### Eigenvalues of a 600x600 random matrix 
 
 Time in seconds  - 10 runs - lower is better
 

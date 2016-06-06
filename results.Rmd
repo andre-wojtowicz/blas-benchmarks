@@ -9,9 +9,9 @@ output:
 Document generation date: `r Sys.time()`
 
 ```{r checkpoint, echo=FALSE, warning=FALSE, message=FALSE}
-#(checkpoint)
-#checkpoint("2016-04-01", scanForPackages=FALSE, verbose=FALSE)
-.libPaths("C:\\Users\\Andrzej\\Documents\\.checkpoint\\2016-04-01\\lib\\x86_64-w64-mingw32\\3.2.3")
+library(checkpoint)
+checkpoint("2016-04-01", scanForPackages=FALSE, verbose=FALSE)
+
 library(reshape2)
 library(dplyr)
 library(ggplot2)
@@ -22,6 +22,7 @@ library(RColorBrewer)
 
  1. [Configuration](#configuration)
  2. [Results per host](#results-per-host)
+     * [Intel Core i7-4790K + MSI GeForce GTX 980 Ti Lightning](#intel-core-i7-4790k--msi-geforce-gtx-980-ti)
     * [Intel Core i5-4590 + NVIDIA GeForce GT 430](#intel-core-i5-4590--nvidia-geforce-gt-430)
     * [Intel Core i5-4590 + NVIDIA GeForce GTX 750 Ti](#intel-core-i5-4590--nvidia-geforce-gtx-750-ti)
     * [Intel Core i5-3570](#intel-core-i5-3570)
@@ -43,7 +44,7 @@ library(RColorBrewer)
 
 ## Configuration
 
-**R software**: [Microsoft R Open](https://mran.microsoft.com/open/) (3.2.4).
+**R software**: [Microsoft R Open](https://mran.microsoft.com/open/) (3.2.4)
 
 **Libraries**:
 
@@ -59,15 +60,16 @@ library(RColorBrewer)
 
 |No.|CPU|GPU|
 |---|---|---|
-|1.|[Intel Core i5-4590](http://ark.intel.com/products/80815/Intel-Core-i5-4590-Processor-6M-Cache-up-to-3_70-GHz)|[NVIDIA GeForce GT 430](http://www.geforce.com/hardware/desktop-gpus/geforce-gt-430/specifications)|
-|2.|[Intel Core i5-4590](http://ark.intel.com/products/80815/Intel-Core-i5-4590-Processor-6M-Cache-up-to-3_70-GHz)|[NVIDIA GeForce GTX 750 Ti](http://www.geforce.com/hardware/desktop-gpus/geforce-gtx-750-ti/specifications)|
-|3.|[Intel Core i5-3570](http://ark.intel.com/products/65702/Intel-Core-i5-3570-Processor-6M-Cache-up-to-3_80-GHz)| - |
-|4.|[Intel Core i3-2120](http://ark.intel.com/products/53426/Intel-Core-i3-2120-Processor-3M-Cache-3_30-GHz)| - |
-|5.|[Intel Core i3-3120M](http://ark.intel.com/products/71465/Intel-Core-i3-3120M-Processor-3M-Cache-2_50-GHz)| - |
-|6.|[Intel Core i5-3317U](http://ark.intel.com/products/65707/Intel-Core-i5-3317U-Processor-3M-Cache-up-to-2_60-GHz)|[NVIDIA GeForce GT 630M](http://www.geforce.com/hardware/notebook-gpus/geforce-gt-630m/specifications)|
-|7.|[Intel Pentium Dual-Core E5300](http://ark.intel.com/products/35300/Intel-Pentium-Processor-E5300-2M-Cache-2_60-GHz-800-MHz-FSB)| - |
+|1.|[Intel Core i7-4790K](http://ark.intel.com/products/80807/Intel-Core-i7-4790K-Processor-8M-Cache-up-to-4_40-GHz)|[MSI GeForce GTX 980 Ti Lightning](https://us.msi.com/Graphics-card/GTX-980-Ti-LIGHTNING.html#hero-specification)|
+|2.|[Intel Core i5-4590](http://ark.intel.com/products/80815/Intel-Core-i5-4590-Processor-6M-Cache-up-to-3_70-GHz)|[NVIDIA GeForce GT 430](http://www.geforce.com/hardware/desktop-gpus/geforce-gt-430/specifications)|
+|3.|[Intel Core i5-4590](http://ark.intel.com/products/80815/Intel-Core-i5-4590-Processor-6M-Cache-up-to-3_70-GHz)|[NVIDIA GeForce GTX 750 Ti](http://www.geforce.com/hardware/desktop-gpus/geforce-gtx-750-ti/specifications)|
+|4.|[Intel Core i5-3570](http://ark.intel.com/products/65702/Intel-Core-i5-3570-Processor-6M-Cache-up-to-3_80-GHz)| - |
+|5.|[Intel Core i3-2120](http://ark.intel.com/products/53426/Intel-Core-i3-2120-Processor-3M-Cache-3_30-GHz)| - |
+|6.|[Intel Core i3-3120M](http://ark.intel.com/products/71465/Intel-Core-i3-3120M-Processor-3M-Cache-2_50-GHz)| - |
+|7.|[Intel Core i5-3317U](http://ark.intel.com/products/65707/Intel-Core-i5-3317U-Processor-3M-Cache-up-to-2_60-GHz)|[NVIDIA GeForce GT 630M](http://www.geforce.com/hardware/notebook-gpus/geforce-gt-630m/specifications)|
+|8.|[Intel Pentium Dual-Core E5300](http://ark.intel.com/products/35300/Intel-Pentium-Processor-E5300-2M-Cache-2_60-GHz-800-MHz-FSB)| - |
 
-**Benchmarks**: [Urbanek](http://r.research.att.com/benchmarks/R-benchmark-25.R), [Revolution](https://gist.github.com/andrie/24c9672f1ea39af89c66#file-rro-mkl-benchmark-r), [Gcbd](https://cran.r-project.org/web/packages/gcbd/vignettes/gcbd.pdf).
+**Benchmarks**: [R-benchmark-25](http://r.research.att.com/benchmarks/R-benchmark-25.R), [Revolution](https://gist.github.com/andrie/24c9672f1ea39af89c66#file-rro-mkl-benchmark-r), [Gcbd](https://cran.r-project.org/web/packages/gcbd/vignettes/gcbd.pdf).
 
 ```{r config, echo=FALSE}
 
@@ -121,7 +123,7 @@ for (hostname in HOSTNAMES)
             data.frame(Host= hostname, 
                        CPU = gsub("\\(.*?\\)", "", dr[1]), 
                        GPU = ifelse(length(dr)==3,
-                        gsub("(NVIDIA).*\\[(.*)\\]", "\\1 \\2", dr[3]), NA)))
+                        gsub("(NVIDIA|MSI).*\\[(.*)\\]", "\\1 \\2", dr[3]), NA)))
     } else {
         warning(paste("File", fp, "does not exist"))
     }
@@ -205,7 +207,11 @@ for (host in hosts.info$Host)
     
     for (benchmark in BENCHMARKS)
     {
-        cat(paste0("### ", paste(toupper(substring(benchmark, 1,1)), substring(benchmark, 2),sep="", collapse=" "), " benchmark\n\n"))
+        cat(paste0("### ", 
+                    ifelse(benchmark=="urbanek", "R-benchmark-25", # fix to common name
+                           paste(toupper(substring(benchmark, 1,1)), 
+                                 substring(benchmark, 2), " benchmark", sep="", collapse=" ")), 
+                   "\n\n"))
         
         testnames = benchmark.results %>% 
             filter(Benchmark == benchmark) %>% 
@@ -252,7 +258,15 @@ for (host in hosts.info$Host)
                     else if(x=="cuBLAS") "D" 
                     else "C"}))
             
-            cat(paste0("#### ", gsub(" \\(.*\\)", "", test)), "\n\n")
+            cat(paste0("#### ", # fix urbanek errors in names
+                       gsub(" \\(.*\\)", "", 
+                            gsub("Linear regr. over a 3000x3000 matrix", 
+                                 "Linear regr. over a 2000x2000 matrix", 
+                                 gsub("Eigenvalues of a 640x640", 
+                                      "Eigenvalues of a 600x600", test))
+                            )
+                ), 
+            "\n\n")
             
             if (any(data.to.plot$Time == Inf))
             {
@@ -409,7 +423,11 @@ for (lib in LIBRARIES)
     
     for (benchmark in BENCHMARKS)
     {
-        cat(paste0("### ", paste(toupper(substring(benchmark, 1,1)), substring(benchmark, 2),sep="", collapse=" "), " benchmark\n\n"))
+        cat(paste0("### ", 
+                    ifelse(benchmark=="urbanek", "R-benchmark-25", # fix to common name
+                           paste(toupper(substring(benchmark, 1,1)), 
+                                 substring(benchmark, 2), " benchmark", sep="", collapse=" ")), 
+                   "\n\n"))
         
         testnames = benchmark.results %>% 
             filter(Benchmark == benchmark) %>% 
@@ -443,7 +461,15 @@ for (lib in LIBRARIES)
             data.to.plot = data.to.plot %>% rowwise() %>%
                 mutate(CPUGPU=hosts.info[which(hosts.info$Host==Host), ifelse(lib!="cublas", "CPU", "GPU")])
             
-            cat(paste0("#### ", gsub(" \\(.*\\)", "", test)), "\n\n")
+            cat(paste0("#### ", # fix urbanek errors in names
+                       gsub(" \\(.*\\)", "", 
+                            gsub("Linear regr. over a 3000x3000 matrix", 
+                                 "Linear regr. over a 2000x2000 matrix", 
+                                 gsub("Eigenvalues of a 640x640", 
+                                      "Eigenvalues of a 600x600", test))
+                            )
+                ), 
+            "\n\n")
             
             if (any(data.to.plot$Time == Inf))
             {
@@ -463,9 +489,9 @@ for (lib in LIBRARIES)
                       " runs - lower is better\n\n"))
             
             
-            myColors = c("#5AAC45", "#636363", "#636363", "#E6191A", "#636363", "#636363")
+            myColors = c("#5AAC45", "#636363", "#636363", "#636363", "#E6191A", "#636363", "#636363")
             if (lib=="cublas")
-                myColors = c("#E6191A", "#5AAC45", "#636363")#, "#636363", "#5AAC45", "#636363")
+                myColors = c("#5AAC45", "#E6191A", "#636363", "#636363")#, "#5AAC45", "#636363")
             
             colScale = scale_fill_manual(name = "Color", values = myColors)
             
@@ -503,7 +529,7 @@ for (lib in LIBRARIES)
             
             } else {
                 
-            rbColors = c("#F40000","#FF8000","#0094FF","#7F00FF","#E900FF","#00DD0E")
+            rbColors = c("#F40000","#FF8000","#0094FF","#7F00FF","#E900FF","#00DD0E","#B35807")
             
             png(image.path, width=400, height=350, type="cairo")
                 print(ggplot(data.to.plot, 
@@ -528,7 +554,7 @@ for (lib in LIBRARIES)
                     scale_y_continuous(expand = c(0, 0)) +
                     geom_hline(yintercept = 0, color="grey") + 
                     geom_vline(xintercept = 0.4, color="grey") +
-                    scale_shape_manual(values=c(25,24,22,21,23,25)) +
+                    scale_shape_manual(values=c(25,24,22,21,23,25,24)) +
                     scale_color_manual(values=rbColors) +
                     scale_fill_manual(values=rbColors)
                     
@@ -558,7 +584,7 @@ for (lib in LIBRARIES)
                                   breaks=c(100, 200, 400, 800, 1600, 3200, 5000),
                                   limits=c(100, 5500)) +
                     scale_y_log10() +
-                    scale_shape_manual(values=c(25,24,22,21,23,25)) +
+                    scale_shape_manual(values=c(25,24,22,21,23,25,24)) +
                     geom_hline(yintercept = 0, color="grey") +
                     geom_vline(xintercept = min(data.to.plot$Size), color="grey") +
                     scale_color_manual(values=rbColors) +
