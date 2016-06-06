@@ -1,7 +1,7 @@
 # BLAS libraries benchmarks
 Andrzej Wójtowicz  
 
-Document generation date: 2016-06-06 15:01:42
+Document generation date: 2016-06-06 22:40:18
 
 
 
@@ -31,6 +31,8 @@ Document generation date: 2016-06-06 15:01:42
 
 ## Configuration
 
+**OS**: Debian Jessie, kernel 4.4
+
 **R software**: [Microsoft R Open](https://mran.microsoft.com/open/) (3.2.4)
 
 **Libraries**:
@@ -47,7 +49,7 @@ Document generation date: 2016-06-06 15:01:42
 
 |No.|CPU|GPU|
 |---|---|---|
-|1.|[Intel Core i7-4790K](http://ark.intel.com/products/80807/Intel-Core-i7-4790K-Processor-8M-Cache-up-to-4_40-GHz)|[MSI GeForce GTX 980 Ti Lightning](https://us.msi.com/Graphics-card/GTX-980-Ti-LIGHTNING.html#hero-specification)|
+|1.|[Intel Core i7-4790K](http://ark.intel.com/products/80807/Intel-Core-i7-4790K-Processor-8M-Cache-up-to-4_40-GHz) (OC 4.5 GHz)|[MSI GeForce GTX 980 Ti Lightning](https://us.msi.com/Graphics-card/GTX-980-Ti-LIGHTNING.html#hero-specification)|
 |2.|[Intel Core i5-4590](http://ark.intel.com/products/80815/Intel-Core-i5-4590-Processor-6M-Cache-up-to-3_70-GHz)|[NVIDIA GeForce GT 430](http://www.geforce.com/hardware/desktop-gpus/geforce-gt-430/specifications)|
 |3.|[Intel Core i5-4590](http://ark.intel.com/products/80815/Intel-Core-i5-4590-Processor-6M-Cache-up-to-3_70-GHz)|[NVIDIA GeForce GTX 750 Ti](http://www.geforce.com/hardware/desktop-gpus/geforce-gtx-750-ti/specifications)|
 |4.|[Intel Core i5-3570](http://ark.intel.com/products/65702/Intel-Core-i5-3570-Processor-6M-Cache-up-to-3_80-GHz)| - |
