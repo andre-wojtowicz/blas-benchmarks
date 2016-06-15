@@ -1,6 +1,8 @@
 # BLAS libraries benchmarks
 Andrzej Wójtowicz  
 
+[![DOI](https://zenodo.org/badge/22705/andre-wojtowicz/blas-benchmarks.svg)](https://dx.doi.org/10.5281/zenodo.55662)
+
 Document generation date: 2016-06-06 22:40:18
 
 
