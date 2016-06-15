@@ -1,10 +1,12 @@
 ---
 title: "BLAS libraries benchmarks"
 author: "Andrzej Wójtowicz"
-output: 
-    html_document:
-        keep_md: yes
+output:
+  html_document:
+    keep_md: yes
 ---
+
+[![DOI](https://zenodo.org/badge/22705/andre-wojtowicz/blas-benchmarks.svg)](https://dx.doi.org/10.5281/zenodo.55662)
 
 Document generation date: `r Sys.time()`
 
