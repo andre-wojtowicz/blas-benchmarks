@@ -1,6 +1,8 @@
 # BLAS libraries benchmarks
 Andrzej Wójtowicz  
 
+[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.57910.svg)](http://dx.doi.org/10.5281/zenodo.57910)
+
 Document generation date: 2016-07-14 17:20:41
 
 This document presents timing results for BLAS ([Basic Linear Algebra Subprograms](https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms)) libraries in [R](https://en.wikipedia.org/wiki/R_(programming_language)) on diverse CPUs and GPUs.
