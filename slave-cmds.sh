@@ -244,6 +244,7 @@ function atlas_mt_install {
     wget ${WGET_OPTIONS} http://www.netlib.org/lapack/lapack-3.6.0.tgz
 
     sed -i "1423i\thrchk=0;" ../CONFIG/src/config.c
+    sed -i "324i\case 0x5E:" ../CONFIG/src/backend/archinfo_x86.c
 
     ../configure --shared --with-netlib-lapack-tarfile=`pwd`/lapack-3.6.0.tgz
     make
@@ -297,6 +298,7 @@ function gotoblas2_install {
     rm SurviveGotoBLAS2_3.141.tar.gz
 
     cd survivegotoblas2-3.141
+    # if target architecture can not be detected, then add to "make" e.g. TARGET=CORE2 ; see 3. in 02QuickInstall.txt
     make REFBLAS_ANTILOGY=1 NO_CBLAS=1 GOTOBLASLIBSONAME=libgoto2blas.so GOTOLAPACKLIBSONAME=libgoto2lapack.so -j ${NPROC}
     
     cp exports/libgoto2blas.so   ${DIR_GOTOBLAS2}
@@ -403,6 +405,7 @@ function blis_install {
     cd blis
     git checkout 32db0adc218ea4ae370164dbe8d23b41cd3526d3 # 17.05.2016
     
+    # if target architecture can not be detected ("reference" is used), then replace "auto" to e.g. "haswell" ; see https://github.com/flame/blis/wiki/BuildSystem
     ./configure -t pthreads --enable-shared auto
     make -j ${NPROC}
     cd ..
