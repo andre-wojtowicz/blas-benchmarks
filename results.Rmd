@@ -12,6 +12,7 @@ This document presents timing results for BLAS ([Basic Linear Algebra Subprogram
 
 ### Changelog
 
+ * 2016-11-25: **results:** added Intel Atom C2758.
  * 2016-07-14: **results:** added Intel Core i5-6500; changed results view of gcbd benchmark to relative performance gain; changed reference CPU (Intel Pentium Dual-Core E5300) and GPU (NVIDIA GeForce GT 630M); **code:** fixed target architecture detection for Intel Core i5-6500-like CPUs in multi-threaded Atlas library; added info how to force target architecture in GotoBLAS2 and BLIS libraries.
 
 ```{r checkpoint, echo=FALSE, warning=FALSE, message=FALSE}
@@ -36,6 +37,7 @@ library(RColorBrewer)
     * [Intel Core i3-2120](#intel-core-i3-2120)
     * [Intel Core i3-3120M](#intel-core-i3-3120m)
     * [Intel Core i5-3317U + NVIDIA GeForce GT 630M](#intel-core-i5-3317u--nvidia-geforce-gt-630m)
+    * [Intel Atom C2758](#intel-atom-c2758)
     * [Intel Pentium Dual-Core E5300](#intel-pentium-dual-core-e5300)
  3. [Results per library](#results-per-library)
     * [Netlib](#netlib)
@@ -77,7 +79,8 @@ library(RColorBrewer)
 |6.|[Intel Core i3-2120](http://ark.intel.com/products/53426/Intel-Core-i3-2120-Processor-3M-Cache-3_30-GHz)| - |
 |7.|[Intel Core i3-3120M](http://ark.intel.com/products/71465/Intel-Core-i3-3120M-Processor-3M-Cache-2_50-GHz)| - |
 |8.|[Intel Core i5-3317U](http://ark.intel.com/products/65707/Intel-Core-i5-3317U-Processor-3M-Cache-up-to-2_60-GHz)|[NVIDIA GeForce GT 630M](http://www.geforce.com/hardware/notebook-gpus/geforce-gt-630m/specifications)|
-|9.|[Intel Pentium Dual-Core E5300](http://ark.intel.com/products/35300/Intel-Pentium-Processor-E5300-2M-Cache-2_60-GHz-800-MHz-FSB)| - |
+|9.|[Intel Atom C2758](http://ark.intel.com/products/77988/Intel-Atom-Processor-C2758-4M-Cache-2_40-GHz)| - |
+|10.|[Intel Pentium Dual-Core E5300](http://ark.intel.com/products/35300/Intel-Pentium-Processor-E5300-2M-Cache-2_60-GHz-800-MHz-FSB)| - |
 
 **Benchmarks**: [R-benchmark-25](http://r.research.att.com/benchmarks/R-benchmark-25.R), [Revolution](https://gist.github.com/andrie/24c9672f1ea39af89c66#file-rro-mkl-benchmark-r), [Gcbd](https://cran.r-project.org/web/packages/gcbd/vignettes/gcbd.pdf).
 
@@ -279,12 +282,17 @@ for (host in hosts.info$Host)
                 ), 
             "\n\n")
             
-            if (any(data.to.plot$Time == Inf))
+            if (any(data.to.plot$Time == Inf, na.rm = TRUE))
             {
                 cat(paste(as.character(data.to.plot[which(data.to.plot$Time == Inf), "Library"])), "hangs in this test\n\n")
             }
             
-            data.to.plot = data.to.plot[data.to.plot$Time != Inf, ]
+            if (any(is.na(data.to.plot$Time)))
+            {
+                cat(paste(unique(as.character(data.to.plot[which(is.na(data.to.plot$Time)), "Library"]))), "crashes in this test\n\n")
+            }
+            
+            data.to.plot = data.to.plot[data.to.plot$Time != Inf & !is.na(data.to.plot$Time), ]
             
             image.path = file.path(IMAGES.DIR,
                paste0("img_ph", 
@@ -476,12 +484,17 @@ for (lib in LIBRARIES)
                 ), 
             "\n\n")
             
-            if (any(data.to.plot$Time == Inf))
+            if (any(is.na(data.to.plot$Time)))
             {
-                cat(paste(as.character(as.data.frame(data.to.plot)[which(data.to.plot$Time == Inf), "CPUGPU"])), "hangs in this test\n\n")
+                cat(paste("Library crashes on", unique(as.character(as.data.frame(data.to.plot)[which(is.na(data.to.plot$Time)), "CPUGPU"]))), "in this test\n\n")
             }
             
-            data.to.plot = data.to.plot[data.to.plot$Time != Inf, ]
+            if (any(data.to.plot$Time == Inf, na.rm = TRUE))
+            {
+                cat(paste("Library hangs on", as.character(as.data.frame(data.to.plot)[which(data.to.plot$Time == Inf), "CPUGPU"])), "in this test\n\n")
+            }
+            
+            data.to.plot = data.to.plot[data.to.plot$Time != Inf & !is.na(data.to.plot$Time), ]
             
             image.path = file.path(IMAGES.DIR,
                paste0("img_pl", 
@@ -496,7 +509,7 @@ for (lib in LIBRARIES)
                 cat(paste0("Performance gain regarding matrix size - reference: ", ifelse(lib!="cublas", HOST.REF, HOST.REF.GPU), " - from ", max(data.to.plot$Runs), " to ", min(data.to.plot$Runs), " runs - higher is better\n\n"))
             
             
-            myColors = c("#5AAC45", "#636363", "#636363", "#636363", "#636363", "#636363", "#636363", "#E6191A")
+            myColors = c("#5AAC45", "#636363", "#636363", "#636363", "#636363", "#636363", "#636363", "#636363", "#E6191A")
             if (lib=="cublas")
                 myColors = c("#5AAC45", "#636363", "#636363", "#E6191A")
             
@@ -536,7 +549,7 @@ for (lib in LIBRARIES)
             
             } else {
                 
-            rbColors = c("#F40000","#FF8000","#0094FF","#7F00FF","#E900FF","#00DD0E","#B35807", "#7F006E")
+            rbColors = c("#F40000","#FF8000","#0094FF","#7F00FF","#E900FF","#00DD0E","#B35807", "#7F006E", "#F4DD00")
             
             png(image.path, width=700, height=400, type="cairo")
                 print(ggplot(data.to.plot, 
@@ -561,7 +574,7 @@ for (lib in LIBRARIES)
                     scale_y_continuous(expand = c(0, 0)) +
                     geom_hline(yintercept = 0, color="grey") + 
                     geom_vline(xintercept = 90, color="grey") +
-                    scale_shape_manual(values=c(25,24,22,21,23,25,24,22)) +
+                    scale_shape_manual(values=c(25,24,22,21,23,25,24,22,21)) +
                     scale_color_manual(values=rbColors) +
                     scale_fill_manual(values=rbColors)
                     
