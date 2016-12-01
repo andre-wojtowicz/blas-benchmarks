@@ -12,6 +12,7 @@ This document presents timing results for BLAS ([Basic Linear Algebra Subprogram
 
 ### Changelog
 
+ * 2016-12-01: **results:** updated timing for Intel Xeon E3-1275 v5; **code:** added possible compilation fix for invalid operands error in GotoBLAS2.
  * 2016-11-30: **results:** added Intel Xeon E5-1620 v4.
  * 2016-11-29: **results:** added Intel Xeon E3-1275 v5.
  * 2016-11-25: **results:** added Intel Atom C2758.

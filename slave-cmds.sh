@@ -299,6 +299,7 @@ function gotoblas2_install {
 
     cd survivegotoblas2-3.141
     # if target architecture can not be detected, then add to "make" e.g. TARGET=CORE2 ; see 3. in 02QuickInstall.txt
+    # fix "invalid operands (*UND* and *ABS* sections) for `*'" error: add "BINARY=64 DYNAMIC_ARCH=1" to "make"
     make REFBLAS_ANTILOGY=1 NO_CBLAS=1 GOTOBLASLIBSONAME=libgoto2blas.so GOTOLAPACKLIBSONAME=libgoto2lapack.so -j ${NPROC}
     
     cp exports/libgoto2blas.so   ${DIR_GOTOBLAS2}

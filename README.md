@@ -3,12 +3,13 @@ Andrzej Wójtowicz
 
 [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.57910.svg)](http://dx.doi.org/10.5281/zenodo.57910)
 
-Document generation date: 2016-11-30 13:07:14
+Document generation date: 2016-12-01 12:24:11
 
 This document presents timing results for BLAS ([Basic Linear Algebra Subprograms](https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms)) libraries in [R](https://en.wikipedia.org/wiki/R_(programming_language)) on diverse CPUs and GPUs.
 
 ### Changelog
 
+ * 2016-12-01: **results:** updated timing for Intel Xeon E3-1275 v5; **code:** added possible compilation fix for invalid operands error in GotoBLAS2.
  * 2016-11-30: **results:** added Intel Xeon E5-1620 v4.
  * 2016-11-29: **results:** added Intel Xeon E3-1275 v5.
  * 2016-11-25: **results:** added Intel Atom C2758.
